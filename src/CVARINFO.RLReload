@@ -1,0 +1,1 @@
+server bool rl_droppedmag_loses_rounds = false;

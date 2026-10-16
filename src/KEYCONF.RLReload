@@ -1,0 +1,8 @@
+clearplayerclasses
+addplayerclass RL_Marine
+
+// The engine's own reload button (+reload) works directly.
+// These make the Brutal Doom-style reload commands do the same thing, so a
+// button you bound for Brutal Doom's reload also works here.
+alias reload "+reload; wait 3; -reload"
+alias reloader "+reload; wait 3; -reload"

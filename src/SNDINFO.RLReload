@@ -1,0 +1,8 @@
+rl/pistol/magout   RLMAGOUT
+rl/pistol/magin    RLMAGIN
+rl/pistol/slide    RLSLIDE
+rl/pistol/dry      RLDRY
+
+$random rl/pistol/magdrop { rl/pistol/magdrop1 rl/pistol/magdrop2 }
+rl/pistol/magdrop1 RLBNC1
+rl/pistol/magdrop2 RLBNC2
