@@ -1,0 +1,25 @@
+version "3.6"
+class RLProbe : EventHandler
+{
+	int last;
+	override void WorldLoaded(WorldEvent e) { Console.Printf("PROBE: world loaded %s", level.mapname); }
+	override void PlayerEntered(PlayerEvent e)
+	{
+		let p = players[e.PlayerNumber].mo;
+		for (Inventory i = p.Inv; i; i = i.Inv) Console.Printf("PROBE inv: %s x%d", i.GetClassName(), i.Amount);
+	}
+	override void WorldTick()
+	{
+		let p = players[0].mo;
+		if (!p) { if (level.maptime % 35 == 0) Console.Printf("PROBE: no player mo"); return; }
+		let w = players[0].ReadyWeapon;
+		String st = "NOWEAPON";
+		if (w) st = w.GetClassName();
+		let psp = players[0].GetPSprite(PSP_WEAPON);
+		if (psp && psp.CurState) st = st .. " spr#" .. psp.Sprite .. " fr=" .. psp.Frame;
+		int sig = p.CountInv("RL_PistolMag")*1000 + p.CountInv("RL_PistolChamber")*100000 + p.CountInv("Clip") + (psp ? psp.Frame*10000000 : 0);
+		if (sig != last || level.maptime % 70 == 0)
+			Console.Printf("T%d [%s] %s mag=%d chamber=%d reserve=%d", level.maptime, p.GetClassName(), st, p.CountInv("RL_PistolMag"), p.CountInv("RL_PistolChamber"), p.CountInv("Clip"));
+		last = sig;
+	}
+}
