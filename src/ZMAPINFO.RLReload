@@ -1,5 +1,5 @@
 GameInfo
 {
 	PlayerClasses = "RL_Marine"
-	AddEventHandlers = "RL_Calibrate"
+	AddEventHandlers = "RL_Calibrate", "RL_WeaponSwap"
 }

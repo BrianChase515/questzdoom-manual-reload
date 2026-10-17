@@ -17,12 +17,19 @@ Your off hand is visible (rigged WebXR hand model) and does the work:
 - Let go of a mag away from the gun and it goes back in your pouch.
 - **Two-handed grip:** squeeze the off-hand grip on the pistol and your hand wraps the grip (it
   stays there after you seat a mag). If it looks like the wrong hand, switch *Two-handed grip hand*.
-- **Grip vs trigger:** with QuestZDoom's *Two Handed Weapons* on, the off-hand **grip** near a gun makes
-  QuestZDoom steady the aim along the line between your hands (best on long guns); the mod detects this
-  and treats the hand as holding the gun. Use the off-hand **trigger** to grab things (mags, slide) — it
-  never engages QuestZDoom's steadying.
+- **Grip vs trigger:** with QuestZDoom's *Two Handed Weapons* on, squeezing the off-hand **grip** anywhere
+  within ~50 cm of your gun hand (your hip included) makes QuestZDoom aim the gun *at your off hand*. That's
+  right for a shotgun pump, but on the pistol the support hand sits beside/under the gun, so it bends the
+  aim down. Grab with the off-hand **trigger**, and turn *QuestZDoom Two Handed Weapons* off (it's in the
+  Manual Reload menu) if you play pistol-heavy. A red warning shows while it's bending your aim.
 - Dropped mags fall and lie on the floor; racking with a round chambered ejects a live round; every
   shot ejects a spent case.
+
+**Weapon switching:** *Manual Reload Settings → Right stick up/down = switch weapons* binds the right
+stick (which QuestZDoom sends as mouse-wheel up/down) to previous/next weapon.
+
+Whatever way you get a pistol or shotgun (cheat menu, `give`, an old save), the mod swaps it for its own
+version automatically.
 
 Settings live in *Options → Manual Reload Settings*: physical on/off, off-hand orientation,
 grab-zone sliders, and a **calibration readout** that shows your hand's position relative to the

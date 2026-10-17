@@ -7,8 +7,16 @@ OptionMenu "RL_Settings"
 {
 	Title "Manual Reload"
 	StaticText " "
+	Command "Right stick up/down = switch weapons", "rl_bind_stick_weapons"
+	StaticText "Binds right stick up = previous weapon, down = next weapon", 1
+	StaticText " "
+	Option "QuestZDoom Two Handed Weapons", "vr_two_handed_weapons", "OnOff"
+	StaticText "Off-hand GRIP within ~50 cm points the gun at your off hand.", 1
+	StaticText "Good on the shotgun pump; on the pistol it bends aim down.", 1
+	StaticText "Off is recommended for the pistol; the hand still holds it.", 1
+	StaticText " "
 	Option "Physical reload (VR hands)", "rl_physical", "OnOff"
-	StaticText "B = mag release. Grip at your hip = grab a mag.", 1
+	StaticText "B = mag release. Off-hand TRIGGER at your hip = grab a mag.", 1
 	StaticText "Push it into the grip to seat. Grip the back of", 1
 	StaticText "the slide and pull to rack.", 1
 	StaticText " "

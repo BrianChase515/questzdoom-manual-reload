@@ -8,11 +8,30 @@ class RL_Calibrate : EventHandler
 		let pm = players[consoleplayer].mo;
 		if (!pm) return;
 		let p = RL_PhysWeapon(players[consoleplayer].ReadyWeapon);
-		if (!p) return;
+		if (!p)
+		{
+			CVar cv0 = CVar.FindCVar('rl_calibrate');
+			let w = players[consoleplayer].ReadyWeapon;
+			if (cv0 && cv0.GetBool() && w)
+				Screen.DrawText(SmallFont, Font.CR_ORANGE, 10, 60,
+					String.Format("holding %s - not a Manual Reload weapon", w.GetClassName()),
+					DTA_VirtualWidth, 320, DTA_VirtualHeight, 200, DTA_KeepRatio, true);
+			return;
+		}
 
 		if (p.calStep > 0)
 			Screen.DrawText(SmallFont, Font.CR_YELLOW, 10, 40, p.CalPrompt(p.calStep - 1),
 				DTA_VirtualWidth, 480, DTA_VirtualHeight, 300, DTA_KeepRatio, true);
+
+		if (p.physActive && p.SteadyIsWrong())
+		{
+			Screen.DrawText(SmallFont, Font.CR_RED, 10, 30,
+				"QuestZDoom Two Handed Weapons is bending your aim (off-hand GRIP).",
+				DTA_VirtualWidth, 480, DTA_VirtualHeight, 300, DTA_KeepRatio, true);
+			Screen.DrawText(SmallFont, Font.CR_RED, 10, 39,
+				"Grab with the off-hand TRIGGER, or turn it off in Manual Reload settings.",
+				DTA_VirtualWidth, 480, DTA_VirtualHeight, 300, DTA_KeepRatio, true);
+		}
 
 		CVar cv = CVar.FindCVar('rl_calibrate');
 		if (!cv || !cv.GetBool()) return;

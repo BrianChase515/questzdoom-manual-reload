@@ -110,6 +110,9 @@ class RL_PhysWeapon : DoomWeapon
 	virtual int  CalZoneCount() { return 0; }
 	virtual Name CalZone(int i) { return 'none'; }
 	virtual clearscope String CalPrompt(int i) { return ""; }
+	// True when QuestZDoom's two-handed steadying is pointing this gun somewhere
+	// the player can't mean (e.g. at the off hand down at the hip).
+	virtual clearscope bool SteadyIsWrong() { return steadied && inHip; }
 	virtual clearscope String StatusLine() { return ""; }
 	virtual clearscope String ZoneLine() { return ""; }
 

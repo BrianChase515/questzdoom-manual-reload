@@ -93,6 +93,10 @@ class RL_Pistol : RL_PhysWeapon
 			? "CALIBRATING PISTOL 1/2: put your off hand where you'd SEAT A MAG (bottom of the grip) and squeeze"
 			: "CALIBRATING PISTOL 2/2: now put your off hand on the BACK OF THE SLIDE and squeeze";
 	}
+	// A pistol's support hand sits beside/under the gun, so QuestZDoom's
+	// "aim at the off hand" steadying always bends the aim sideways/down.
+	override bool SteadyIsWrong() { return steadied; }
+
 	override String StatusLine()
 	{
 		return String.Format("PISTOL  mag %s   slide %s   chamber %d   mag %d   slide pos %.2f",

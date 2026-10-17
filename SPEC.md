@@ -85,6 +85,16 @@ A weapon overrides `PhysTick`, `OffhandPose`, `StatusLine/ZoneLine` and draws it
   two-handed steadying instead (gun forward == gun→off-hand line).
 - Overrides of `clearscope` virtuals must not repeat `clearscope`; `cross`/`dot` are operators, not names.
 - Calibration wizard (`rl_calib_request`) records magwell / slide spots from the player's own hands.
+- QuestZDoom two-handed steadying (VrInputDefault.cpp): engages on an off-hand **grip** press while the hands
+  are < 0.5 m apart and replaces gun pitch/yaw with the dominant→off-hand line until the grip is released.
+  Wrong for pistols (support hand isn't in front) and for grabbing at the hip. Engine cvars *can* be set
+  from a MENUDEF `Option` (not from console/alias in mod context), so the menu exposes `vr_two_handed_weapons`.
+- KEYCONF aliases run "unsafe", but `bind` is a safe command, so a menu `Command` can call an alias that binds
+  keys. QuestZDoom sends right stick up/down as MWheelUp/MWheelDown.
+- Weapons that arrive by `give`/cheat menus/old saves bypass `replaces`; `RL_WeaponSwap` converts them in
+  inventory each tic (exact-class match on Pistol/Shotgun and HDVR's Vanilla_* subclasses).
+- A Name compared with a `class<Actor>` is compiled as a class constant — compare `GetClassName()` for
+  DECORATE classes.
 - Deliveries to the laptop are verified by pulling the file back and comparing hashes.
 
 ## 4. Test harness

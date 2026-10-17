@@ -6,3 +6,7 @@ addplayerclass RL_Marine
 // button you bound for Brutal Doom's reload also works here.
 alias reload "+reload; wait 3; -reload"
 alias reloader "+reload; wait 3; -reload"
+
+// Menu button: right thumbstick up / down cycles weapons (QuestZDoom sends the
+// right stick up/down as mouse-wheel keys).
+alias rl_bind_stick_weapons "bind mwheelup weapprev; bind mwheeldown weapnext; echo Right stick up/down now switches weapons"
