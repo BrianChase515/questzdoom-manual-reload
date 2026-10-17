@@ -66,6 +66,8 @@ class RL_Pistol : Pistol
 	double lf, ls, lu;     // off hand relative to gun (forward, side, up)
 	double bh, bd, eyeH;   // off hand height above feet, distance from body, eye height
 	bool   nearWell, nearSlide, inHip, nearGun;
+	bool   steadied;       // QuestZDoom's two-handed mode is aiming the gun at the off hand
+	int    steadyTics;
 	int    calStep;      // 0 = off, 1 = waiting for magwell squeeze, 2 = waiting for slide squeeze
 	Vector3 rawGun, rawOff, rawFwd, rawUp;   // raw engine values relative to the player, for the readout
 	double rawFwdLen;
@@ -187,6 +189,9 @@ class RL_Pistol : Pistol
 			if (level.maptime % 70 == 0) RL_Log(pm, "TICK");
 		}
 
+		// ---- QuestZDoom two-handed hold: the grip (not the trigger) is holding the gun
+		if (steadied && gripNow && hand != HAND_MAG) { hand = HAND_SUPPORT; cycled = false; }
+
 		// ---- mag release (B) -------------------------------------------
 		if (magRelease && magSeated) EjectMag(pm);
 
@@ -279,6 +284,13 @@ class RL_Pistol : Pistol
 		nearWell  = (here - well).Length()  < RL_CVarF('rl_well_r', 4);
 		nearSlide = (here - slide).Length() < RL_CVarF('rl_slide_r', 4);
 		nearGun   = nearWell || here.Length() < RL_CVarF('rl_support_r', 8);
+
+		// Engine two-handed mode: the gun's forward axis lines up with the gun->off-hand
+		// line (heights are squashed by the 1.2 pixel stretch in world units).
+		Vector3 hl = (rel.x, rel.y, rel.z * 1.2);
+		bool aligned = hl.Length() > 2 && (gf dot hl.Unit()) > cos(RL_CVarF('rl_steady_deg', 3));
+		steadyTics = aligned ? min(steadyTics + 1, 10) : 0;
+		steadied = steadyTics >= 2;
 		inHip     = bh < eyeH * RL_CVarF('rl_hip_height', 0.65) && bd < RL_CVarF('rl_hip_r', 20);
 	}
 
@@ -318,12 +330,23 @@ class RL_Pistol : Pistol
 	}
 
 	// A live round flies out of the ejection port (right side, top of the slide).
-	void EjectRound(PlayerPawn pm)
+	void EjectRound(PlayerPawn pm) { EjectFromPort(pm, "RL_EjectedRound"); }
+	void EjectCasing(PlayerPawn pm) { if (pm) EjectFromPort(pm, "RL_Casing"); }
+
+	void EjectFromPort(PlayerPawn pm, class<Actor> what)
 	{
 		Vector3 gp, gf, gs, gu;
-		[gp, gf, gs, gu] = RL_VR.GunPose(pm);
+		if (RL_VR.Active(pm)) [gp, gf, gs, gu] = RL_VR.GunPose(pm);
+		else
+		{
+			// flat screen: approximate the gun just below and in front of the eyes
+			gf = (Actor.AngleToVector(pm.angle, cos(pm.pitch)), -sin(pm.pitch));
+			gs = (Actor.AngleToVector(pm.angle + 90, 1), 0);
+			gu = (0, 0, 1);
+			gp = pm.pos + (0, 0, pm.player.viewheight - 10) + gf * 10;
+		}
 		Vector3 at = gp + gf * RL_CVarF('rl_port_f', 4) + gu * RL_CVarF('rl_port_u', 1.5) - gs * 1;
-		let r = Actor.Spawn("RL_EjectedRound", at);
+		let r = Actor.Spawn(what, at);
 		if (r)
 		{
 			r.angle = pm.angle + frandom(-60, 60);
@@ -416,6 +439,7 @@ class RL_Pistol : Pistol
 		bool enhanced = RL_CVarInt('evw_weapons') == 1;
 		class<Actor> puff = enhanced ? RL_FindActor('EnBulletPuff', "BulletPuff") : (class<Actor>)("BulletPuff");
 		A_FireBullets(5.6, 0, 1, 5, puff, 0);   // flags 0 = don't touch the reserve
+		invoker.EjectCasing(PlayerPawn(self));
 
 		if (RL_MagCount() > 0)
 		{
@@ -527,11 +551,12 @@ class RL_Pistol : Pistol
 		RLPI A 0 A_JumpIf(RL_Physical(), "Ready.Physical");
 		RLPI A 0 A_JumpIf(!RL_Chambered(), "Ready.Locked");
 	Ready.Loop:
+		RLPI A 0 A_JumpIf(RL_Physical(), "Ready.Physical");   // re-checked every tic
 		RLPI A 1 A_WeaponReady(WRF_ALLOWRELOAD);
 		Loop;
 	Ready.Locked:
-		RLPI F 1 A_WeaponReady(WRF_ALLOWRELOAD);
 		RLPI F 0 A_JumpIf(RL_Physical(), "Ready.Physical");
+		RLPI F 1 A_WeaponReady(WRF_ALLOWRELOAD);
 		Loop;
 	Ready.Physical:
 		RLSM A 1 { RL_PhysVisual(); A_WeaponReady(); }
@@ -780,6 +805,28 @@ class RL_EjectedRound : Actor
 		RLRD A 350 A_StartSound("weapons/casing", CHAN_BODY, 0, 0.5);
 	Fade:
 		RLRD A 1 A_FadeOut(0.05);
+		Loop;
+	}
+}
+
+// A spent case ejected on every shot.
+class RL_Casing : RL_EjectedRound
+{
+	States
+	{
+	Spawn:
+		RLCS A 1
+		{
+			invoker.falling++;
+			angle += 31;
+			if (pos.z <= floorz || invoker.falling > 105) return ResolveState("Landed");
+			return ResolveState(null);
+		}
+		Loop;
+	Landed:
+		RLCS A 210 A_StartSound("weapons/casing", CHAN_BODY, 0, 0.4);
+	Fade:
+		RLCS A 1 A_FadeOut(0.05);
 		Loop;
 	}
 }

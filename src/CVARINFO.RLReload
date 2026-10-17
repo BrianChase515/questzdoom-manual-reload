@@ -22,3 +22,4 @@ server float rl_support_r = 8;
 user int rl_support_side = 0;
 server float rl_port_f = 4;
 server float rl_port_u = 1.5;
+server float rl_steady_deg = 3;

@@ -275,3 +275,13 @@ Model RL_EjectedRound
 	Scale 0.65 0.65 0.65
 	FrameIndex RLRD A 0 0
 }
+
+// Spent case (cartridge model with the bullet cut off)
+Model RL_Casing
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Casing.md3"
+	Skin 0 "Pistol.png"
+	Scale 0.6 0.6 0.6
+	FrameIndex RLCS A 0 0
+}

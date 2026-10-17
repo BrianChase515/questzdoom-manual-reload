@@ -22,7 +22,7 @@ class RL_Calibrate : EventHandler
 		CVar cv = CVar.FindCVar('rl_calibrate');
 		if (!cv || !cv.GetBool()) return;
 
-		static const String handNames[] = { "empty", "HOLDING MAG", "ON SLIDE", "grip" };
+		static const String handNames[] = { "empty", "HOLDING MAG", "ON SLIDE", "grip", "ON GUN" };
 		Array<String> lines;
 		lines.Push(String.Format("physical %s   mag %s   slide %s   chamber %d   mag %d",
 			p.physActive ? "ON" : "off", p.magSeated ? "IN" : "OUT",
@@ -31,7 +31,8 @@ class RL_Calibrate : EventHandler
 		lines.Push(String.Format("hand vs body: height %.1f (eye %.1f)  dist %.1f", p.bh, p.eyeH, p.bd));
 		lines.Push(String.Format("zones: %s %s %s   hand: %s   slide %.2f",
 			p.inHip ? "[HIP]" : "hip", p.nearWell ? "[MAGWELL]" : "magwell",
-			p.nearSlide ? "[SLIDE]" : "slide", handNames[clamp(p.hand, 0, 3)], p.slideShown));
+			p.nearSlide ? "[SLIDE]" : "slide", handNames[clamp(p.hand, 0, 4)], p.slideShown));
+		lines.Push(String.Format("two-handed steady (QuestZDoom): %s", p.steadied ? "YES" : "no"));
 
 		lines.Push(String.Format("gun pos - player: %.1f %.1f %.1f   offhand - player: %.1f %.1f %.1f",
 			p.rawGun.x, p.rawGun.y, p.rawGun.z, p.rawOff.x, p.rawOff.y, p.rawOff.z));

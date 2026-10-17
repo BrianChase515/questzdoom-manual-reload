@@ -199,3 +199,23 @@ if len(sys.argv) > 4:
     hdr = b'IDP3' + struct.pack('<i', 15) + b'RL_Round'.ljust(64, b'\0') + struct.pack('<9i', 0, 1, 0, 1, 0, 108, o_su, o_su, o_e2)
     open(sys.argv[4], 'wb').write(hdr + fr + blob)
     print("wrote", sys.argv[4], "round size:", np.round(mx - mn, 1))
+
+# ---- spent case: the cartridge with the bullet (front 40%) flattened onto the case mouth
+if len(sys.argv) > 5:
+    S = surfs[ROUND]
+    v = S['xyz'][IDLE] - S['xyz'][IDLE].mean(0)
+    v[:, 2] -= v[:, 2].min()
+    cut = v[:, 0].min() + 0.6 * (v[:, 0].max() - v[:, 0].min())
+    v[:, 0] = np.minimum(v[:, 0], cut)
+    v[:, 0] -= v[:, 0].mean()
+    q = np.clip(np.round(v * 64.0), -32768, 32767).astype('<i2')
+    verts = np.concatenate([q.view(np.uint8).reshape(S['nv'], 6), S['nrm'][IDLE]], -1).tobytes()
+    o_sh = 108; o_tri = o_sh + len(S['shaders']); o_st = o_tri + len(S['tris']); o_xyz = o_st + len(S['st']); o_e = o_xyz + len(verts)
+    h = S['sid'] + S['name'] + struct.pack('<10i', S['flags'], 1, S['nsh'], S['nv'], S['ntri'], o_tri, o_sh, o_st, o_xyz, o_e)
+    blob = h + S['shaders'] + S['tris'] + S['st'] + verts
+    mn, mx = v.min(0), v.max(0)
+    fr = struct.pack('<3f3f3ff', *mn, *mx, 0, 0, 0, float(np.abs(v).max() * 1.8)) + b'casing'.ljust(16, b'\0')
+    o_su = 108 + len(fr); o_e2 = o_su + len(blob)
+    hdr = b'IDP3' + struct.pack('<i', 15) + b'RL_Casing'.ljust(64, b'\0') + struct.pack('<9i', 0, 1, 0, 1, 0, 108, o_su, o_su, o_e2)
+    open(sys.argv[5], 'wb').write(hdr + fr + blob)
+    print("wrote", sys.argv[5], "casing size:", np.round(mx - mn, 1))

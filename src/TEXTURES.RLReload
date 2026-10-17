@@ -112,3 +112,4 @@ Sprite "RLSXH0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
 Sprite "RLSXI0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
 Sprite "RLMGB0", 7, 8 { Offset 3, 8 Patch "CLIPA0", 0, 0 }
 Sprite "RLRDA0", 4, 4 { Offset 2, 4 Patch "CLIPA0", 0, 0 }
+Sprite "RLCSA0", 4, 4 { Offset 2, 4 Patch "CLIPA0", 0, 0 }

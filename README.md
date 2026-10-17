@@ -17,7 +17,12 @@ Your off hand is visible (rigged WebXR hand model) and does the work:
 - Let go of a mag away from the gun and it goes back in your pouch.
 - **Two-handed grip:** squeeze the off-hand grip on the pistol and your hand wraps the grip (it
   stays there after you seat a mag). If it looks like the wrong hand, switch *Two-handed grip hand*.
-- Dropped mags fall and lie on the floor; racking with a round chambered ejects a live round.
+- **Grip vs trigger:** with QuestZDoom's *Two Handed Weapons* on, the off-hand **grip** near a gun makes
+  QuestZDoom steady the aim along the line between your hands (best on long guns); the mod detects this
+  and treats the hand as holding the gun. Use the off-hand **trigger** to grab things (mags, slide) — it
+  never engages QuestZDoom's steadying.
+- Dropped mags fall and lie on the floor; racking with a round chambered ejects a live round; every
+  shot ejects a spent case.
 
 Settings live in *Options → Manual Reload Settings*: physical on/off, off-hand orientation,
 grab-zone sliders, and a **calibration readout** that shows your hand's position relative to the
