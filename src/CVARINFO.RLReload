@@ -1,1 +1,18 @@
 server bool rl_droppedmag_loses_rounds = false;
+server bool rl_physical = true;
+user bool rl_calibrate = false;
+
+// grab zones, in game units (about 3 cm each), relative to the gun-hand controller
+server float rl_well_f = -1;
+server float rl_well_s = 0;
+server float rl_well_u = -7;
+server float rl_well_r = 4;
+server float rl_slide_f = -4;
+server float rl_slide_s = 0;
+server float rl_slide_u = 3;
+server float rl_slide_r = 4;
+server float rl_rack_len = 2.5;
+// hip pouch: off hand lower than this fraction of eye height, and this close to your body
+server float rl_hip_h = 0.65;
+server float rl_hip_r = 20;
+user int rl_hand_orient = 1;

@@ -3,6 +3,7 @@
 // this mod AFTER the weapon pack.)
 ACTOR RL_Marine : DoomMarineGuy
 {
+	Player.JumpZ 0          // B is the magazine release
 	Player.StartItem "RL_Pistol"
 	Player.StartItem "Vanilla_Fist"
 	Player.StartItem "Clip", 50

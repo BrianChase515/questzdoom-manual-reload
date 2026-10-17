@@ -1,0 +1,5 @@
+server bool rl_fake_vr = false;
+server int rl_fake_mode = 0;
+server float rl_fake_f = 0;
+server float rl_fake_s = 0;
+server float rl_fake_u = 0;

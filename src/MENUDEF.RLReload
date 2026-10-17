@@ -7,9 +7,32 @@ OptionMenu "RL_Settings"
 {
 	Title "Manual Reload"
 	StaticText " "
-	StaticText "Reload button: anything bound to Reload", 1
-	StaticText "(right stick click by default)", 1
+	Option "Physical reload (VR hands)", "rl_physical", "OnOff"
+	StaticText "B = mag release. Grip at your hip = grab a mag.", 1
+	StaticText "Push it into the grip to seat. Grip the back of", 1
+	StaticText "the slide and pull to rack.", 1
+	StaticText " "
+	Option "Show calibration readout", "rl_calibrate", "OnOff"
+	Option "Off-hand orientation", "rl_hand_orient", "RL_HandOrient"
+	StaticText " "
+	StaticText "Grab zones (game units, ~3 cm each)", 1
+	Slider "Magwell forward", "rl_well_f", -10, 10, 0.5, 1
+	Slider "Magwell up", "rl_well_u", -15, 5, 0.5, 1
+	Slider "Magwell radius", "rl_well_r", 1, 10, 0.5, 1
+	Slider "Slide grab forward", "rl_slide_f", -12, 6, 0.5, 1
+	Slider "Slide grab up", "rl_slide_u", -5, 10, 0.5, 1
+	Slider "Slide grab radius", "rl_slide_r", 1, 10, 0.5, 1
+	Slider "Rack length", "rl_rack_len", 0.5, 6, 0.25, 2
+	Slider "Hip height (x eye height)", "rl_hip_h", 0.3, 0.9, 0.05, 2
+	Slider "Hip distance from body", "rl_hip_r", 5, 40, 1, 0
 	StaticText " "
 	Option "Dropped mag loses its rounds", "rl_droppedmag_loses_rounds", "OnOff"
 	StaticText "Off = leftover rounds go back to your reserve", 1
+}
+
+OptionValue "RL_HandOrient"
+{
+	0, "Palm down"
+	1, "Palm sideways (A)"
+	2, "Palm sideways (B)"
 }

@@ -1,6 +1,6 @@
-// Placeholder sprite frames for the model-driven pistol states.
-// The engine requires real sprite frames before it will give you the weapon;
-// in VR the 3D model is drawn instead. Falls back to the normal pistol sprite.
+// Placeholder sprite frames for model-driven states.
+// The engine requires real sprite frames before it will give you a weapon;
+// in VR the 3D models are drawn instead.
 Sprite "RLPIA0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
 Sprite "RLPIB0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
 Sprite "RLPIC0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
@@ -43,3 +43,34 @@ Sprite "RLPTO0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
 Sprite "RLPTP0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
 Sprite "RLPTQ0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
 Sprite "RLPTR0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMA0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMB0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMC0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMD0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSME0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMF0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMG0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMH0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSMI0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNA0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNB0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNC0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSND0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNE0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNF0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNG0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNH0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLSNI0", 57, 62 { Offset -126, -106 Patch "PISGA0", 0, 0 }
+Sprite "RLMGA0", 7, 8 { Offset 3, 8 Patch "CLIPA0", 0, 0 }
+Sprite "RLHDA0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDB0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDC0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDD0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDE0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDF0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDG0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDH0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDI0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDJ0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDK0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }
+Sprite "RLHDL0", 57, 62 { Offset -126, -106 Patch "PUNGA0", 0, 0 }

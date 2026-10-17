@@ -1,4 +1,5 @@
 GameInfo
 {
 	PlayerClasses = "RL_Marine"
+	AddEventHandlers = "RL_Calibrate"
 }

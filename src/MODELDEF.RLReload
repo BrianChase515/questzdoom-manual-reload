@@ -1,5 +1,5 @@
-// Manual Reload - pistol model mapping (same scale/offset as HDVR's pistol)
-// RL_Pistol.md3 = HDVR Pistol.md3 frames 0-37 + generated tactical frames 38-55
+// Manual Reload - model mapping (same scale/offset as HDVR's pistol)
+// RL_Pistol.md3: 0-37 HDVR frames, 38-55 tactical reload, 56-64 mag in + slide steps, 65-73 mag out + slide steps
 Model RL_Pistol
 {
 	Path "Models/Weapons/Hud/Pistol"
@@ -31,7 +31,6 @@ Model RL_Pistol
 	FrameIndex RLPI V 0 24
 	FrameIndex RLPI W 0 25
 	FrameIndex RLPI X 0 26
-
 	FrameIndex RLPT A 0 38
 	FrameIndex RLPT B 0 39
 	FrameIndex RLPT C 0 40
@@ -52,6 +51,35 @@ Model RL_Pistol
 	FrameIndex RLPT R 0 55
 }
 
+// physical mode: frame picked every tic from the gun's real state, so no interpolation
+Model RL_Pistol
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Pistol.md3"
+	Skin 0 "Pistol.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RLSM A 0 56
+	FrameIndex RLSM B 0 57
+	FrameIndex RLSM C 0 58
+	FrameIndex RLSM D 0 59
+	FrameIndex RLSM E 0 60
+	FrameIndex RLSM F 0 61
+	FrameIndex RLSM G 0 62
+	FrameIndex RLSM H 0 63
+	FrameIndex RLSM I 0 64
+	FrameIndex RLSN A 0 65
+	FrameIndex RLSN B 0 66
+	FrameIndex RLSN C 0 67
+	FrameIndex RLSN D 0 68
+	FrameIndex RLSN E 0 69
+	FrameIndex RLSN F 0 70
+	FrameIndex RLSN G 0 71
+	FrameIndex RLSN H 0 72
+	FrameIndex RLSN I 0 73
+}
+
 // Muzzle flash (copied from HDVR)
 Model RL_Pistol
 {
@@ -61,4 +89,43 @@ Model RL_Pistol
 	Scale 1.5 1.2 1.5
 	Offset 0.0 -3.0 0.0
 	FrameIndex PISF A 0 2
+}
+
+// Off hand: WebXR generic hand (MIT). Frame letter = pose + 4 * orientation
+//   poses: 0 relaxed, 1 grip, 2 holding mag, 3 pinch;  orientations: 0 palm down, 1 / 2 palm sideways
+Model RL_OffHand
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Hand.md3"
+	Skin 0 "RL_Glove.png"
+	Model 1 "RL_Mag.md3"
+	Skin 1 "Pistol.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RLHD A 0 0
+	FrameIndex RLHD B 0 1
+	FrameIndex RLHD C 0 2
+	FrameIndex RLHD C 1 1
+	FrameIndex RLHD D 0 3
+	FrameIndex RLHD E 0 4
+	FrameIndex RLHD F 0 5
+	FrameIndex RLHD G 0 6
+	FrameIndex RLHD G 1 2
+	FrameIndex RLHD H 0 7
+	FrameIndex RLHD I 0 8
+	FrameIndex RLHD J 0 9
+	FrameIndex RLHD K 0 10
+	FrameIndex RLHD K 1 3
+	FrameIndex RLHD L 0 11
+}
+
+// Dropped magazine
+Model RL_DroppedMag
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Mag.md3"
+	Skin 0 "Pistol.png"
+	Scale -1.0 1.0 1.0
+	FrameIndex RLMG A 0 0
 }

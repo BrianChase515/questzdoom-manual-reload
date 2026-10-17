@@ -13,7 +13,12 @@ source frame 9..26) in which:
 
 Output frames: 0..37 = original, 38..55 = tactical versions of 9..26.
 
-Usage: make_tactical_md3.py <Pistol.md3 in> <RL_Pistol.md3 out>
+Also appends physical-reload frames:
+  56..64 = mag seated, slide pulled back 0/8 .. 8/8 of lock travel
+  65..73 = mag removed,  slide pulled back 0/8 .. 8/8
+and (optional 3rd arg) writes RL_Mag.md3: the magazine + top round on its own.
+
+Usage: make_tactical_md3.py <Pistol.md3 in> <RL_Pistol.md3 out> [RL_Mag.md3 out]
 """
 import struct, sys, math
 import numpy as np
@@ -100,11 +105,30 @@ for f in TACT_SRC:
         else:
             new_xyz[s].append(surfs[s]['xyz'][f]); new_nrm[s].append(surfs[s]['nrm'][f])
 
+# ---- physical-reload frames: slide position steps, with and without magazine
+MAG = 3
+R8, t8 = kabsch(surfs[SLIDE]['xyz'][IDLE], surfs[SLIDE]['xyz'][8])
+print("slide idle->locked rotation (deg):", round(math.degrees(math.acos(max(-1, min(1, (np.trace(R8) - 1) / 2)))), 3))
+slide_delta = (surfs[SLIDE]['xyz'][8] - surfs[SLIDE]['xyz'][IDLE]).mean(0)
+PHYS = []
+for mag_in in (True, False):
+    for step in range(9):
+        PHYS.append((mag_in, step))
+        for s_ in range(nsurf):
+            v = surfs[s_]['xyz'][IDLE].copy(); n = surfs[s_]['nrm'][IDLE]
+            if s_ == SLIDE:
+                v = v + slide_delta * (step / 8.0)
+            if not mag_in and s_ in (MAG, ROUND):
+                v = np.repeat(v.mean(0, keepdims=True), len(v), 0)   # collapse = invisible
+            new_xyz[s_].append(v); new_nrm[s_].append(n)
+TACT_SRC_ALL = TACT_SRC + [None] * len(PHYS)
+
 print("frame, body rotation deg, rigid-fit max error (units)")
 for r in report: print(" ", r)
 
-total = nf + len(TACT_SRC)
+total = nf + len(TACT_SRC) + len(PHYS)
 all_frames = frames + [dict(origin=frames[f]['origin'], name=('tac%d' % f).encode().ljust(16, b'\0')) for f in TACT_SRC]
+all_frames += [dict(origin=frames[IDLE]['origin'], name=('%s_s%d' % ('mag' if m else 'nomag', st)).encode().ljust(16, b'\0')) for m, st in PHYS]
 
 # ---- write
 def surf_bytes(s):
@@ -138,3 +162,23 @@ o_end = o_surf + sum(len(b) for b in surf_blobs)
 header = b'IDP3' + struct.pack('<i', 15) + name + struct.pack('<9i', flags, total, 0, nsurf, nskins, o_frames, o_tags, o_surf, o_end)
 open(DST, 'wb').write(header + frame_blob + b''.join(surf_blobs))
 print("wrote", DST, total, "frames")
+
+# ---- standalone magazine model (mag + top round), centred on the magazine
+if len(sys.argv) > 3:
+    parts = [MAG, ROUND]
+    centre = surfs[MAG]['xyz'][IDLE].mean(0)
+    blobs = []
+    for s_ in parts:
+        S = surfs[s_]
+        q = np.clip(np.round((S['xyz'][IDLE] - centre) * 64.0), -32768, 32767).astype('<i2')
+        verts = np.concatenate([q.view(np.uint8).reshape(S['nv'], 6), S['nrm'][IDLE]], -1).tobytes()
+        o_sh = 108; o_tri = o_sh + len(S['shaders']); o_st = o_tri + len(S['tris']); o_xyz = o_st + len(S['st']); o_e = o_xyz + len(verts)
+        h = S['sid'] + S['name'] + struct.pack('<10i', S['flags'], 1, S['nsh'], S['nv'], S['ntri'], o_tri, o_sh, o_st, o_xyz, o_e)
+        blobs.append(h + S['shaders'] + S['tris'] + S['st'] + verts)
+    pts = np.concatenate([surfs[s_]['xyz'][IDLE] - centre for s_ in parts])
+    mn, mx = pts.min(0), pts.max(0)
+    fr = struct.pack('<3f3f3ff', *mn, *mx, 0, 0, 0, float(np.abs(pts).max() * 1.8)) + b'mag'.ljust(16, b'\0')
+    o_fr = 108; o_su = o_fr + len(fr); o_e = o_su + sum(len(b) for b in blobs)
+    hdr = b'IDP3' + struct.pack('<i', 15) + b'RL_Mag'.ljust(64, b'\0') + struct.pack('<9i', 0, 1, 0, len(parts), 0, o_fr, o_su, o_su, o_e)
+    open(sys.argv[3], 'wb').write(hdr + fr + b''.join(blobs))
+    print("wrote", sys.argv[3], "mag size (units):", np.round(mx - mn, 1))

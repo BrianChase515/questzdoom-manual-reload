@@ -12,7 +12,9 @@ whenever something bites us.
 | Loaded ammo | Separate per-weapon items: `RL_<Weapon>Mag` (Ammo subclass → shows as HUD ammo2) and, where the gun has one, `RL_<Weapon>Chamber`. |
 | Engine auto-ammo | Disabled per weapon with `AmmoUse 0` + `+AMMO_OPTIONAL` + `A_FireBullets(..., flags 0)`. Firing only consumes loaded rounds. Weapon never auto-switches when its mag is empty. |
 | Empty gun | Trigger gives a dry click. No auto-reload, ever. |
-| Reload input | `+reload` (engine), plus aliases `reload` / `reloader` (Brutal Doom's commands). |
+| Reload input (VR) | Physical: B = mag release, off-hand grip (`+reload`, "RThumb") = grab. Hip zone = draw mag; magwell zone = seat; slide zone = rack. |
+| Reload input (non-VR) | `+reload`, plus aliases `reload` / `reloader` (Brutal Doom's commands). |
+| Off hand | `RL_OffHand` weapon in QuestZDoom's off-hand slot; pose frame set every tic from the active gun's hand state. 3 orientation variants selectable in menu until we know which is right. |
 | Reload no-op | Gun full, or no reserve ammo (unless a chamber-only action is possible). |
 | Dropped mag rounds | Return to reserve by default; `rl_droppedmag_loses_rounds` makes them lost. Applies to every detachable-mag weapon. |
 | First pickup | Weapon arrives fully loaded (`AttachToOwner` override). |
@@ -27,7 +29,7 @@ Status: ✅ done · 🧪 needs headset test · 📝 proposed (needs Brian's OK)
 
 | Weapon | Real-world model | Capacity | Reload style | Animation source | Status |
 |---|---|---|---|---|---|
-| Pistol | Beretta 92FS | 15+1 | Tactical (mag swap, slide forward) / empty (mag swap + slide release). Slide locks on empty. | HDVR frames 8–26 (empty); generated frames 38–55 (tactical) | ✅ engine test · 🧪 headset |
+| Pistol | Beretta 92FS | 15+1 | Physical: B release, hip draw, tap to seat, grab-and-rack; slide lock on empty mag. Button mode: tactical / empty auto sequences. | HDVR frames 8–26 (empty); generated 38–55 (tactical), 56–73 (slide steps, mag in/out) | ✅ desktop sim · 🧪 headset |
 | Shotgun | Pump (Rem 870 style) | 📝 6+1 tube | 📝 Shell-by-shell; reload can be interrupted by fire; pump if chamber empty | 📝 HDVR Shotgun.md3 has 36 frames, ~7 used; 22–31 look like a loading motion — verify | 📝 |
 | Super Shotgun | Double-barrel | 2 | 📝 Manual break-open: only reloads when you press reload (vanilla auto-reloads after every shot) | HDVR ssg.md3 already has open/load/close (frames 26–45) | 📝 |
 | Chaingun | — | 📝 100-round belt box (vanilla uses Clip) | 📝 Box swap | 📝 No reload frames; generate a tilt-down/up | 📝 |
@@ -59,11 +61,22 @@ Status: ✅ done · 🧪 needs headset test · 📝 proposed (needs Brian's OK)
 - KEYCONF aliases print a harmless "Unknown command" at startup; they still work.
 - Saves made before the mod keep old weapon classes → new game.
 
+- **VR engine API** (QuestZDoom only, all wrapped in `src/zscript/rl_vr.zs`): `AttackPos/OffhandPos`,
+  `AttackDir/OffhandDir(actor, yaw, pitch)` — feeding player angle/pitch +90 yaw / -90 pitch gives the
+  controller's forward/side/up axes including roll. `player.OffhandWeapon` + `PSP_OFFHANDWEAPON` layer
+  draws a weapon model at the off-hand controller. Off-hand grip sends `KEY_PAD_RTHUMB`; off-hand trigger
+  `KEY_LSHIFT`. When QuestZDoom's own two-handed stabilisation engages it hides the off-hand layer.
+- Positions are world map units (~3 cm each). Grab zones are cvars so they can be tuned in the menu.
+- Model frames chosen per tic (psprite Sprite/Frame) need `NOINTERPOLATION` model blocks, or the renderer
+  blends toward the state's own frame.
+
 ## 4. Test harness
 
 Desktop LZDoom 3.88b built from source (headers fix: `-include cstdint -include stdexcept ...`, stub
 `I_BuildALDeviceList`/`I_BuildALResamplersList` when built without OpenAL), run under Xvfb with
 `-iwad PLUTONIA.WAD -file HDVRweapons_Plus ManualReload_VR.pk3 probe -warp 1`.
 A probe event handler logs `mag / chamber / reserve / sprite frame` every change.
+`--desktop-test` builds swap in `tests/shim/zscript/rl_vr.zs`, which fakes both controllers from cvars
+(`rl_fake_vr`, `rl_fake_mode` gun/body space, `rl_fake_f/s/u`), so hand gestures can be scripted.
 **Gotcha:** startup `+commands` all run immediately — `wait` only delays commands in the same
 string, so put the whole input script in ONE `+"cmd; wait N; cmd; ..."` argument.
