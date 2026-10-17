@@ -19,7 +19,7 @@ P="$W/pk3/Models/Weapons/Hud/Pistol"; mkdir -p "$P" "$W/pk3/sounds/rlreload" "$W
 
 # models: pistol (+ tactical / physical frames), standalone magazine, posed hand
 unzip -q -j -o "$HDVR" 'Models/Weapons/Hud/Pistol/Pistol.md3' -d "$W/x"
-python3 -I "$ROOT/tools/make_tactical_md3.py" "$W/x/Pistol.md3" "$P/RL_Pistol.md3" "$P/RL_Mag.md3"
+python3 -I "$ROOT/tools/make_tactical_md3.py" "$W/x/Pistol.md3" "$P/RL_Pistol.md3" "$P/RL_Mag.md3" "$P/RL_Round.md3"
 python3 -I "$ROOT/tools/make_hand_md3.py" "$ROOT/assets/webxr-hand/right.glb" "$P/RL_Hand.md3" "$P/RL_Mag.md3"
 
 # sounds

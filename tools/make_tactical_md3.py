@@ -18,7 +18,7 @@ Also appends physical-reload frames:
   65..73 = mag removed,  slide pulled back 0/8 .. 8/8
 and (optional 3rd arg) writes RL_Mag.md3: the magazine + top round on its own.
 
-Usage: make_tactical_md3.py <Pistol.md3 in> <RL_Pistol.md3 out> [RL_Mag.md3 out]
+Usage: make_tactical_md3.py <Pistol.md3 in> <RL_Pistol.md3 out> [RL_Mag.md3 out] [RL_Round.md3 out]
 """
 import struct, sys, math
 import numpy as np
@@ -182,3 +182,20 @@ if len(sys.argv) > 3:
     hdr = b'IDP3' + struct.pack('<i', 15) + b'RL_Mag'.ljust(64, b'\0') + struct.pack('<9i', 0, 1, 0, len(parts), 0, o_fr, o_su, o_su, o_e)
     open(sys.argv[3], 'wb').write(hdr + fr + b''.join(blobs))
     print("wrote", sys.argv[3], "mag size (units):", np.round(mx - mn, 1))
+
+# ---- loose cartridge (ejected when racking with a round chambered), resting on z = 0
+if len(sys.argv) > 4:
+    S = surfs[ROUND]
+    v = S['xyz'][IDLE] - S['xyz'][IDLE].mean(0)
+    v[:, 2] -= v[:, 2].min()
+    q = np.clip(np.round(v * 64.0), -32768, 32767).astype('<i2')
+    verts = np.concatenate([q.view(np.uint8).reshape(S['nv'], 6), S['nrm'][IDLE]], -1).tobytes()
+    o_sh = 108; o_tri = o_sh + len(S['shaders']); o_st = o_tri + len(S['tris']); o_xyz = o_st + len(S['st']); o_e = o_xyz + len(verts)
+    h = S['sid'] + S['name'] + struct.pack('<10i', S['flags'], 1, S['nsh'], S['nv'], S['ntri'], o_tri, o_sh, o_st, o_xyz, o_e)
+    blob = h + S['shaders'] + S['tris'] + S['st'] + verts
+    mn, mx = v.min(0), v.max(0)
+    fr = struct.pack('<3f3f3ff', *mn, *mx, 0, 0, 0, float(np.abs(v).max() * 1.8)) + b'round'.ljust(16, b'\0')
+    o_su = 108 + len(fr); o_e2 = o_su + len(blob)
+    hdr = b'IDP3' + struct.pack('<i', 15) + b'RL_Round'.ljust(64, b'\0') + struct.pack('<9i', 0, 1, 0, 1, 0, 108, o_su, o_su, o_e2)
+    open(sys.argv[4], 'wb').write(hdr + fr + blob)
+    print("wrote", sys.argv[4], "round size:", np.round(mx - mn, 1))

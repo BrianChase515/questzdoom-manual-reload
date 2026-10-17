@@ -80,6 +80,130 @@ Model RL_Pistol
 	FrameIndex RLSN I 0 73
 }
 
+// two-handed: pistol (mag in) + support hand version A
+Model RL_Pistol
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Pistol.md3"
+	Skin 0 "Pistol.png"
+	Model 1 "RL_SupportA.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RLSU A 0 56
+	FrameIndex RLSU A 1 0
+	FrameIndex RLSU B 0 57
+	FrameIndex RLSU B 1 0
+	FrameIndex RLSU C 0 58
+	FrameIndex RLSU C 1 0
+	FrameIndex RLSU D 0 59
+	FrameIndex RLSU D 1 0
+	FrameIndex RLSU E 0 60
+	FrameIndex RLSU E 1 0
+	FrameIndex RLSU F 0 61
+	FrameIndex RLSU F 1 0
+	FrameIndex RLSU G 0 62
+	FrameIndex RLSU G 1 0
+	FrameIndex RLSU H 0 63
+	FrameIndex RLSU H 1 0
+	FrameIndex RLSU I 0 64
+	FrameIndex RLSU I 1 0
+}
+
+// two-handed: pistol (mag out) + support hand version A
+Model RL_Pistol
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Pistol.md3"
+	Skin 0 "Pistol.png"
+	Model 1 "RL_SupportA.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RLSV A 0 65
+	FrameIndex RLSV A 1 0
+	FrameIndex RLSV B 0 66
+	FrameIndex RLSV B 1 0
+	FrameIndex RLSV C 0 67
+	FrameIndex RLSV C 1 0
+	FrameIndex RLSV D 0 68
+	FrameIndex RLSV D 1 0
+	FrameIndex RLSV E 0 69
+	FrameIndex RLSV E 1 0
+	FrameIndex RLSV F 0 70
+	FrameIndex RLSV F 1 0
+	FrameIndex RLSV G 0 71
+	FrameIndex RLSV G 1 0
+	FrameIndex RLSV H 0 72
+	FrameIndex RLSV H 1 0
+	FrameIndex RLSV I 0 73
+	FrameIndex RLSV I 1 0
+}
+
+// two-handed: pistol (mag in) + support hand version B
+Model RL_Pistol
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Pistol.md3"
+	Skin 0 "Pistol.png"
+	Model 1 "RL_SupportB.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RLSW A 0 56
+	FrameIndex RLSW A 1 0
+	FrameIndex RLSW B 0 57
+	FrameIndex RLSW B 1 0
+	FrameIndex RLSW C 0 58
+	FrameIndex RLSW C 1 0
+	FrameIndex RLSW D 0 59
+	FrameIndex RLSW D 1 0
+	FrameIndex RLSW E 0 60
+	FrameIndex RLSW E 1 0
+	FrameIndex RLSW F 0 61
+	FrameIndex RLSW F 1 0
+	FrameIndex RLSW G 0 62
+	FrameIndex RLSW G 1 0
+	FrameIndex RLSW H 0 63
+	FrameIndex RLSW H 1 0
+	FrameIndex RLSW I 0 64
+	FrameIndex RLSW I 1 0
+}
+
+// two-handed: pistol (mag out) + support hand version B
+Model RL_Pistol
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Pistol.md3"
+	Skin 0 "Pistol.png"
+	Model 1 "RL_SupportB.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RLSX A 0 65
+	FrameIndex RLSX A 1 0
+	FrameIndex RLSX B 0 66
+	FrameIndex RLSX B 1 0
+	FrameIndex RLSX C 0 67
+	FrameIndex RLSX C 1 0
+	FrameIndex RLSX D 0 68
+	FrameIndex RLSX D 1 0
+	FrameIndex RLSX E 0 69
+	FrameIndex RLSX E 1 0
+	FrameIndex RLSX F 0 70
+	FrameIndex RLSX F 1 0
+	FrameIndex RLSX G 0 71
+	FrameIndex RLSX G 1 0
+	FrameIndex RLSX H 0 72
+	FrameIndex RLSX H 1 0
+	FrameIndex RLSX I 0 73
+	FrameIndex RLSX I 1 0
+}
+
 // Muzzle flash (copied from HDVR)
 Model RL_Pistol
 {
@@ -131,12 +255,23 @@ Model RL_OffHand
 	FrameIndex RLHD K 1 3
 }
 
-// Dropped magazine
+// Dropped magazine: falling upright (frame 5), lying on the floor (frame 4); world scale ~0.4 of the hand model
 Model RL_DroppedMag
 {
 	Path "Models/Weapons/Hud/Pistol"
 	Model 0 "RL_Mag.md3"
 	Skin 0 "Pistol.png"
-	Scale -1.0 1.0 1.0
-	FrameIndex RLMG A 0 0
+	Scale 0.45 0.45 0.45
+	FrameIndex RLMG A 0 5
+	FrameIndex RLMG B 0 4
+}
+
+// Ejected live round
+Model RL_EjectedRound
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Round.md3"
+	Skin 0 "Pistol.png"
+	Scale 0.65 0.65 0.65
+	FrameIndex RLRD A 0 0
 }

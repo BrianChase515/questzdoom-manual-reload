@@ -7,7 +7,10 @@ an MD3 with one frame per pose, in the same axis convention as the HDVR pistol
 Usage: make_hand_md3.py <right.glb> <out.md3> <RL_Mag.md3 (appended to)> [preview.png]
 Frames: pose + 4*orientation; poses 0 relaxed, 1 grip/fist, 2 holding magazine,
 3 pinching slide; orientations 0 palm down, 1 palm rolled +90, 2 palm rolled -90.
-RL_Mag.md3 gets frames 1..3 = the magazine sitting in the hand for each orientation.
+RL_Mag.md3 gets frames 1..3 = the magazine sitting in the hand for each orientation,
+4 = lying on the floor, 5 = upright resting on the floor (both for the dropped mag).
+Also writes RL_SupportA.md3 / RL_SupportB.md3 next to <out.md3>: the support hand
+wrapped round the pistol grip, and its mirror image.
 """
 import sys, math, struct
 import numpy as np
@@ -164,6 +167,13 @@ for o_ in ORIENT:
         v, _ = roll(v, o_, GRIP)
         fr.append(v)
     mag_frames.append(fr)
+# frames 4/5 for the dropped magazine: lying on its side, and upright, both resting on z = 0
+allpts = np.concatenate([s_['v'] for s_ in msurf])
+Rl = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)      # roll 90: long axis (z) -> lateral
+lying = [s_['v'] @ Rl.T for s_ in msurf]; lmin = np.concatenate(lying)[:, 2].min()
+lying = [v - np.array([0, 0, lmin]) for v in lying]
+upright = [s_['v'] - np.array([0, 0, allpts[:, 2].min()]) for s_ in msurf]
+mag_frames.append(lying); mag_frames.append(upright)
 blobs = []
 for k, s_ in enumerate(msurf):
     allv = [s_['v']] + [mf[k] for mf in mag_frames]
@@ -205,6 +215,31 @@ hdr = b'IDP3' + struct.pack('<i', 15) + b'RL_Hand'.ljust(64, b'\0') + struct.pac
 open(OUT, 'wb').write(hdr + fb + surf)
 print("wrote", OUT, nf, "frames,", nv, "verts,", nt, "tris; size (units):", np.round(xyz[0].max(0) - xyz[0].min(0), 1))
 print("has UVs:", prim.attributes.TEXCOORD_0 is not None)
+
+# ---- support hand on the pistol (drawn in the gun's model block, not the off-hand slot).
+# The "grip" pose in orientation A, mirrored into a left hand, wrapped round the grip.
+# Because which side is the gun's left depends on the engine's axes, write both
+# the left hand and its mirror image; the player picks whichever looks right.
+SUPPORT_OFFSET = np.array([1.0, 2.5, -2.5])
+grip_v = xyz[1 + 4 * 1]; grip_n = nrm[1 + 4 * 1]
+mir = np.array([1, -1, 1])
+def write_single(path, v, n, flip):
+    t = IDX[:, [0, 2, 1]] if flip else IDX
+    tb = t.astype('<i4').tobytes()
+    vb = np.concatenate([np.clip(np.round(v * 64), -32768, 32767).astype('<i2').view(np.uint8).reshape(nv, 6), enc_n(n)], 1).tobytes()
+    o_sh = 108; o_tri = o_sh + len(shader); o_st = o_tri + len(tb); o_xyz = o_st + len(st); o_end = o_xyz + len(vb)
+    sf_ = b'IDP3' + b'hand'.ljust(64, b'\0') + struct.pack('<10i', 0, 1, 1, nv, nt, o_tri, o_sh, o_st, o_xyz, o_end) + shader + tb + st + vb
+    mn, mx = v.min(0), v.max(0)
+    fr = struct.pack('<3f3f3ff', *mn, *mx, 0, 0, 0, float(np.linalg.norm(np.abs(v).max(0)))) + b'support'.ljust(16, b'\0')
+    o_su = 108 + len(fr); o_e = o_su + len(sf_)
+    hdr_ = b'IDP3' + struct.pack('<i', 15) + b'RL_Support'.ljust(64, b'\0') + struct.pack('<9i', 0, 1, 0, 1, 0, 108, o_su, o_su, o_e)
+    open(path, 'wb').write(hdr_ + fr + sf_)
+import os
+d = os.path.dirname(OUT)
+left_v = grip_v * mir + SUPPORT_OFFSET
+write_single(os.path.join(d, 'RL_SupportA.md3'), left_v, grip_n * mir, True)
+write_single(os.path.join(d, 'RL_SupportB.md3'), left_v * mir, grip_n, False)
+print("wrote RL_SupportA.md3 / RL_SupportB.md3")
 
 if PREVIEW:
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt

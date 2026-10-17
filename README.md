@@ -15,6 +15,9 @@ Your off hand is visible (rigged WebXR hand model) and does the work:
 - The slide locks back on an empty mag, stays locked when you swap mags, and the gun won't fire
   with the slide out of battery.
 - Let go of a mag away from the gun and it goes back in your pouch.
+- **Two-handed grip:** squeeze the off-hand grip on the pistol and your hand wraps the grip (it
+  stays there after you seat a mag). If it looks like the wrong hand, switch *Two-handed grip hand*.
+- Dropped mags fall and lie on the floor; racking with a round chambered ejects a live round.
 
 Settings live in *Options → Manual Reload Settings*: physical on/off, off-hand orientation,
 grab-zone sliders, and a **calibration readout** that shows your hand's position relative to the

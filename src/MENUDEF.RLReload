@@ -17,6 +17,8 @@ OptionMenu "RL_Settings"
 	Option "Write calibration log", "rl_log", "OnOff"
 	StaticText "Log: every grip squeeze writes your hand position to questzdoom.log", 1
 	Option "Off-hand orientation", "rl_hand_orient", "RL_HandOrient"
+	Option "Two-handed grip hand", "rl_support_side", "RL_SupportSide"
+	StaticText "Squeeze grip with your off hand on the pistol to hold it two-handed", 1
 	StaticText " "
 	StaticText "Grab zones (game units, ~3 cm each)", 1
 	Slider "Magwell forward", "rl_well_f", -10, 10, 0.5, 1
@@ -38,4 +40,10 @@ OptionValue "RL_HandOrient"
 	0, "Palm down"
 	1, "Palm sideways (A)"
 	2, "Palm sideways (B)"
+}
+
+OptionValue "RL_SupportSide"
+{
+	0, "Version A"
+	1, "Version B (mirrored)"
 }

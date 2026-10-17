@@ -48,7 +48,8 @@ class RL_Pistol : Pistol
 		HAND_EMPTY,
 		HAND_MAG,       // holding a fresh magazine
 		HAND_SLIDE,     // pinching the slide
-		HAND_GRIP       // gripping (support hand / nothing to grab)
+		HAND_GRIP,      // gripping nothing in particular
+		HAND_SUPPORT    // two-handed grip on the pistol
 	};
 
 	// ---- physical-reload state (public so the calibration overlay can read it)
@@ -64,7 +65,7 @@ class RL_Pistol : Pistol
 	// last measured positions, for calibration
 	double lf, ls, lu;     // off hand relative to gun (forward, side, up)
 	double bh, bd, eyeH;   // off hand height above feet, distance from body, eye height
-	bool   nearWell, nearSlide, inHip;
+	bool   nearWell, nearSlide, inHip, nearGun;
 	int    calStep;      // 0 = off, 1 = waiting for magwell squeeze, 2 = waiting for slide squeeze
 	Vector3 rawGun, rawOff, rawFwd, rawUp;   // raw engine values relative to the player, for the readout
 	double rawFwdLen;
@@ -198,6 +199,7 @@ class RL_Pistol : Pistol
 				grabF = lf;
 				cycled = false;
 			}
+			else if (nearGun) hand = HAND_SUPPORT;          // on the gun beats the hip pouch
 			else if (inHip && pm.CountInv("Clip") > 0)
 			{
 				heldRounds = min(MAGSIZE, pm.CountInv("Clip"));
@@ -233,6 +235,7 @@ class RL_Pistol : Pistol
 						{
 							pm.TakeInventory("RL_PistolChamber", 1);
 							pm.GiveInventory("Clip", 1);      // ejected round is picked back up
+							EjectRound(pm);
 						}
 						pm.A_StartSound("rl/pistol/slideback", CHAN_AUTO);
 					}
@@ -275,6 +278,7 @@ class RL_Pistol : Pistol
 		Vector3 here  = (lf, ls, lu);
 		nearWell  = (here - well).Length()  < RL_CVarF('rl_well_r', 4);
 		nearSlide = (here - slide).Length() < RL_CVarF('rl_slide_r', 4);
+		nearGun   = nearWell || here.Length() < RL_CVarF('rl_support_r', 8);
 		inHip     = bh < eyeH * RL_CVarF('rl_hip_height', 0.65) && bd < RL_CVarF('rl_hip_r', 20);
 	}
 
@@ -304,12 +308,26 @@ class RL_Pistol : Pistol
 		// drop a magazine you can see fall
 		Vector3 gp, gf, gs, gu;
 		[gp, gf, gs, gu] = RL_VR.GunPose(pm);
-		Vector3 at = gp + gu * RL_CVarF('rl_well_u', -7) + gf * RL_CVarF('rl_well_f', -1);
+		Vector3 at = gp + gf * RL_CVarF('rl_well_f', -1) + gs * RL_CVarF('rl_well_s', 0) + gu * (RL_CVarF('rl_well_u', -7) + 1.5);
 		let m = Actor.Spawn("RL_DroppedMag", at);
 		if (m)
 		{
 			m.angle = pm.angle;
-			m.vel = pm.vel + gu * -2;
+			m.vel = pm.vel + gu * -1.5;
+		}
+	}
+
+	// A live round flies out of the ejection port (right side, top of the slide).
+	void EjectRound(PlayerPawn pm)
+	{
+		Vector3 gp, gf, gs, gu;
+		[gp, gf, gs, gu] = RL_VR.GunPose(pm);
+		Vector3 at = gp + gf * RL_CVarF('rl_port_f', 4) + gu * RL_CVarF('rl_port_u', 1.5) - gs * 1;
+		let r = Actor.Spawn("RL_EjectedRound", at);
+		if (r)
+		{
+			r.angle = pm.angle + frandom(-60, 60);
+			r.vel = pm.vel - gs * frandom(2.5, 3.5) + gu * frandom(2.5, 3.5) + gf * frandom(-0.5, 0.5);
 		}
 	}
 
@@ -318,7 +336,7 @@ class RL_Pistol : Pistol
 		pm.GiveInventory("RL_PistolMag", heldRounds);
 		heldRounds = 0;
 		magSeated = true;
-		hand = HAND_GRIP;          // hand empties; grip still held
+		hand = HAND_SUPPORT;       // hand empties onto the gun; grip still held
 		pm.A_StartSound("rl/pistol/magin", CHAN_WEAPON);
 	}
 
@@ -466,7 +484,12 @@ class RL_Pistol : Pistol
 		let psp = player.GetPSprite(PSP_WEAPON);
 		if (!psp) return;
 		if (slide < 0) slide = invoker.slideShown;
-		State s = invoker.magSeated ? invoker.FindState("Spr.MagIn") : invoker.FindState("Spr.MagOut");
+		State s;
+		bool sup = invoker.hand == HAND_SUPPORT;
+		bool sideB = RL_CVarInt('rl_support_side', 0) != 0;
+		if (!sup)        s = invoker.magSeated ? invoker.FindState("Spr.MagIn")    : invoker.FindState("Spr.MagOut");
+		else if (!sideB) s = invoker.magSeated ? invoker.FindState("Spr.MagInSupA") : invoker.FindState("Spr.MagOutSupA");
+		else             s = invoker.magSeated ? invoker.FindState("Spr.MagInSupB") : invoker.FindState("Spr.MagOutSupB");
 		psp.Sprite = s.sprite;
 		psp.Frame = clamp(int(slide * 8 + 0.5), 0, 8);
 	}
@@ -486,6 +509,18 @@ class RL_Pistol : Pistol
 		Stop;
 	Spr.MagOut:
 		RLSN A -1;
+		Stop;
+	Spr.MagInSupA:
+		RLSU A -1;
+		Stop;
+	Spr.MagOutSupA:
+		RLSV A -1;
+		Stop;
+	Spr.MagInSupB:
+		RLSW A -1;
+		Stop;
+	Spr.MagOutSupB:
+		RLSX A -1;
 		Stop;
 
 	Ready:
@@ -637,12 +672,20 @@ class RL_OffHand : Weapon
 				case RL_Pistol.HAND_MAG:   f = 2; break;
 				case RL_Pistol.HAND_SLIDE: f = 3; break;
 				case RL_Pistol.HAND_GRIP:  f = 1; break;
+				case RL_Pistol.HAND_SUPPORT: f = -1; break;   // drawn on the gun instead
 			}
 		}
 		else if (player.cmd.buttons & BT_RELOAD) f = 1;
-		f += 4 * clamp(RL_Pistol.RL_CVarInt('rl_hand_orient', 1), 0, 2);
 		let me = RL_VR.OffhandPSprite(PlayerPawn(self));
-		if (me) me.Frame = f;
+		if (!me) return;
+		if (f < 0)
+		{
+			me.Sprite = invoker.FindState("Spr.Hidden").sprite;
+			me.Frame = 0;
+			return;
+		}
+		me.Sprite = invoker.FindState("Ready").sprite;
+		me.Frame = f + 4 * clamp(RL_Pistol.RL_CVarInt('rl_hand_orient', 1), 0, 2);
 	}
 
 	States
@@ -659,6 +702,9 @@ class RL_OffHand : Weapon
 	Fire:
 		RLHD A 1;
 		Goto Ready;
+	Spr.Hidden:
+		TNT1 A -1;
+		Stop;
 	Spawn:
 		TNT1 A -1;
 		Stop;
@@ -681,13 +727,59 @@ class RL_DroppedMag : Actor
 		+MOVEWITHSECTOR
 	}
 
+	int falling;
+
 	States
 	{
 	Spawn:
-		RLMG A 12;
-		RLMG A 340 A_StartSound("rl/pistol/magdrop", CHAN_BODY, 0, 0.6);
+		RLMG A 1
+		{
+			invoker.falling++;
+			if (pos.z <= floorz || invoker.falling > 105) return ResolveState("Landed");
+			return ResolveState(null);
+		}
+		Loop;
+	Landed:
+		RLMG B 350 A_StartSound("rl/pistol/magdrop", CHAN_BODY, 0, 0.6);
 	Fade:
-		RLMG A 1 A_FadeOut(0.05);
+		RLMG B 1 A_FadeOut(0.05);
+		Loop;
+	}
+}
+
+// A live round ejected by racking the slide.
+class RL_EjectedRound : Actor
+{
+	int falling;
+
+	Default
+	{
+		Radius 1;
+		Height 1;
+		Gravity 0.8;
+		+NOBLOCKMAP
+		+DROPOFF
+		+NOTELEPORT
+		+THRUACTORS
+		+CANNOTPUSH
+		+MOVEWITHSECTOR
+	}
+
+	States
+	{
+	Spawn:
+		RLRD A 1
+		{
+			invoker.falling++;
+			angle += 25;                       // tumble
+			if (pos.z <= floorz || invoker.falling > 105) return ResolveState("Landed");
+			return ResolveState(null);
+		}
+		Loop;
+	Landed:
+		RLRD A 350 A_StartSound("weapons/casing", CHAN_BODY, 0, 0.5);
+	Fade:
+		RLRD A 1 A_FadeOut(0.05);
 		Loop;
 	}
 }
