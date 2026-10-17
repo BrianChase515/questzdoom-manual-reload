@@ -8,7 +8,7 @@
 //     next shell from the tube.  With QuestZDoom's "Two Handed Weapons" on, the
 //     grip on the pump also steadies your aim along the line between your hands.
 //   * Load: off-hand trigger at your hip takes ONE shell; push it into the
-//     loading port under the receiver.  Repeat.
+//     port on the right side of the receiver.  Repeat.
 //   * The gun only fires with a live shell chambered and the pump home.
 //  BUTTON (flat screen): fire pumps automatically, Reload loads shells one at a
 //  time until the tube is full (fire to stop early).
@@ -74,7 +74,7 @@ class RL_Shotgun : RL_PhysWeapon
 	// Pump fully back: whatever is in the chamber flies out of the port.
 	void EjectChamber(PlayerPawn pm)
 	{
-		double f = RL_CVarF('rl_sg_eject_f', 7), u = RL_CVarF('rl_sg_eject_u', 2);
+		double f = RL_CVarF('rl_sg_ej_f', 4.4), u = RL_CVarF('rl_sg_ej_u', 1.7);
 		if (chamber == CH_LIVE)
 		{
 			pm.GiveInventory("Shell", 1);              // a live shell is picked back up
@@ -97,12 +97,12 @@ class RL_Shotgun : RL_PhysWeapon
 	// ---- framework hooks --------------------------------------------------------
 
 	override int CalZoneCount() { return 2; }
-	override Name CalZone(int i) { return i == 0 ? 'rl_sg_pump' : 'rl_sg_port'; }
+	override Name CalZone(int i) { return i == 0 ? 'rl_sg_pump' : 'rl_sg_load'; }
 	override String CalPrompt(int i)
 	{
 		return i == 0
 			? "CALIBRATING SHOTGUN 1/2: put your off hand ON THE PUMP (pump pushed forward) and squeeze"
-			: "CALIBRATING SHOTGUN 2/2: now put your off hand at the LOADING PORT (under the receiver) and squeeze";
+			: "CALIBRATING SHOTGUN 2/2: now hold your off hand where you push a shell into the PORT (right side of the receiver) and squeeze";
 	}
 	override String StatusLine()
 	{
@@ -112,7 +112,7 @@ class RL_Shotgun : RL_PhysWeapon
 	override String ZoneLine()
 	{
 		return String.Format("zones: %s %s %s", inHip ? "[HIP]" : "hip",
-			nearPump ? "[PUMP]" : "pump", nearPort ? "[LOADING PORT]" : "loading port");
+			nearPump ? "[PUMP]" : "pump", nearPort ? "[PORT]" : "port");
 	}
 
 	override int OffhandPose()
@@ -134,7 +134,7 @@ class RL_Shotgun : RL_PhysWeapon
 	override void PhysTick(PlayerPawn pm, bool gripNow, bool gripWas, bool release)
 	{
 		nearPump = InZone('rl_sg_pump', 14, 0, -1, 8);
-		nearPort = InZone('rl_sg_port', 4, 0, -4, 5);
+		nearPort = InZone('rl_sg_load', 3.5, -2.5, 1, 3);
 		double len = RL_CVarF('rl_sg_pump_len', 3);
 
 		// QuestZDoom two-handed hold: the grip is on the pump

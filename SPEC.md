@@ -95,6 +95,15 @@ A weapon overrides `PhysTick`, `OffhandPose`, `StatusLine/ZoneLine` and draws it
   inventory each tic (exact-class match on Pistol/Shotgun and HDVR's Vanilla_* subclasses).
 - A Name compared with a `class<Actor>` is compiled as a class constant — compare `GetClassName()` for
   DECORATE classes.
+- **Model units → gun space (QuestZDoom HUD models, from `RenderHUDModel`):** with MODELDEF `Scale -1 1 1`
+  and no offsets, an md3 point (x fwd, y, z up) sits at roughly
+  `forward = (1.02x − 30)·0.34`, `up = (1.02z + 5)·0.34`, `side = −1.02y·0.34` (side + = left) map units from
+  `AttackPos` (the engine applies hand transform · 0.01 m · translate(0,5,30) · vr_weaponScale 1.02, and
+  34 units per metre). Model −y is the gun's right. Checked against the pistol zones the player calibrated.
+  Use this to place grab zones from the model instead of guessing.
+- The hand model's fingertip joints carry no skin weight; pick fingertip vertices from the distal phalanges.
+- The pump hand is posed by closing each finger joint until it touches a cylinder the size of the pump
+  (and stays out of the barrel), with the pump angled across the palm so the wrist trails back.
 - Deliveries to the laptop are verified by pulling the file back and comparing hashes.
 
 ## 4. Test harness

@@ -83,6 +83,7 @@ def pose(curl, thumb):
             axis = np.cross(bone, PALM + np.array([0, tilt, 0]))
             acc_ = acc_ @ rot_about(jpos[jn], axis, tc[i])
         D[jn] = acc_
+    global LAST_D; LAST_D = D
     Dm = np.stack([D[n] for n in names])
     Ph = np.concatenate([P, np.ones((len(P), 1))], 1)
     out = np.zeros_like(P); outn = np.zeros_like(N)
@@ -200,7 +201,9 @@ if SHELLFILE and os.path.exists(SHELLFILE):
     def tipverts(joint):
         k = jn[joint]
         return np.where(((J == k) * W).sum(1) > 0.5)[0]
-    ti, ii = tipverts('thumb-tip'), tipverts('index-finger-tip')
+    # tips carry no skin weight; use the distal phalanges
+    ti, ii = tipverts('thumb-phalanx-distal'), tipverts('index-finger-phalanx-distal')
+    assert len(ti) and len(ii), "no fingertip vertices found"
     sd = bytearray(open(SHELLFILE, 'rb').read())
     _, snf, _, sns, _, s_ofr, _, s_osu, _ = struct.unpack('<9i', sd[72:108])
     assert snf == 1 and sns == 1, "RL_ShotShell.md3 should be fresh (1 frame, 1 surface)"
@@ -275,9 +278,87 @@ write_single(os.path.join(d, 'RL_SupportA.md3'), left_v, grip_n * mir, True)
 write_single(os.path.join(d, 'RL_SupportB.md3'), left_v * mir, grip_n, False)
 print("wrote RL_SupportA.md3 / RL_SupportB.md3")
 
+# ---- hand wrapped round a horizontal cylinder (the shotgun pump).
+# The cylinder lies across the palm at the base of the fingers; each finger joint
+# (then the thumb's) is closed a little at a time until that part of the hand
+# touches the cylinder (or the barrel above it), like a real grasp closing.
+# Output frame: cylinder axis = +x through the origin, palm under it (palm faces +z),
+# in model units; the barrel (ellipse PUMP_BARREL) is above.
+PUMP_R = float(os.environ.get('RL_PUMP_R', '2.05'))
+PUMP_BARREL = (3.33, 1.5, 1.08)            # centre height above the pump axis, half width, half height
+def fit_pump():
+    pj = lambda D, n: (D[n] @ np.append(jpos[n], 1))[:3]
+    a = jpos['pinky-finger-phalanx-proximal'] - jpos['index-finger-phalanx-proximal']; a /= np.linalg.norm(a)
+    up = PALM - a * (PALM @ a); up /= np.linalg.norm(up)
+    # the pump runs at an angle across the palm (knuckles angled toward the muzzle),
+    # so the forearm trails back from the gun instead of sticking out sideways
+    beta = math.radians(float(os.environ.get('RL_PUMP_YAW', '-50')))
+    a = a * math.cos(beta) + np.cross(up, a) * math.sin(beta)
+    side = np.cross(up, a)
+    R = np.stack([a, side, up])
+    knuck = (jpos['index-finger-phalanx-proximal'] + jpos['pinky-finger-phalanx-proximal']) / 2
+    wristward = jpos['wrist'] - knuck; wristward -= a * (wristward @ a) + up * (wristward @ up)
+    wristward /= np.linalg.norm(wristward)
+    rest, _ = pose(all4(0, 0, 0), (0, 0, 0, 0, 0))
+    def to_out(v, c):
+        return ((v - c) @ R.T) * UNITS_PER_M
+    # axis position: over the palm just behind the knuckles, resting on the skin
+    base = knuck + wristward * float(os.environ.get('RL_PUMP_BACK', '0.012'))
+    jidx0 = {n: i for i, n in enumerate(names)}
+    palm_ids = [jidx0[n] for n in names if 'metacarpal' in n and 'thumb' not in n] + [jidx0['wrist']]
+    palm_v = rest[(np.isin(J, palm_ids) * W).sum(1) > 0.6]
+    for d in np.arange(-0.03, 0.08, 0.0005):
+        c = base + up * d
+        q = to_out(palm_v, c)
+        if np.hypot(q[:, 1], q[:, 2]).min() >= PUMP_R + 0.15: break
+    def hits(v, mask):
+        q = to_out(v[mask], c)
+        if (np.hypot(q[:, 1], q[:, 2]) < PUMP_R + 0.1).any(): return True
+        bz, bw, bh = PUMP_BARREL
+        return ((((q[:, 1] / bw) ** 2 + ((q[:, 2] - bz) / bh) ** 2)) < 1.05).any()
+    jidx = {n: i for i, n in enumerate(names)}
+    def verts_of(joints):
+        ids = [jidx[n] for n in joints]
+        return (np.isin(J, ids) * W).sum(1) > 0.3
+    curl = {f: [0.0, 0.0, 0.0] for f in FINGERS}
+    thumb = [0.0, 0.5, 0.0, 0.0, 0.0]
+    for f in FINGERS:
+        for jn in range(3):
+            moving = verts_of([f'{f}-finger-{SEG[k]}' for k in range(jn + 1, 5)])
+            while curl[f][jn] < 100:
+                curl[f][jn] += 2
+                v, _ = pose({k: tuple(x) for k, x in curl.items()}, tuple(thumb))
+                if hits(v, moving): curl[f][jn] -= 2; break
+    tverts = verts_of(THUMB[1:])
+    # thumb along the far side of the pump: the opposition angle that lays it
+    # closest to the surface without going in
+    bestopp = None
+    for opp in range(-90, 91, 5):
+        for tilt in (-1.0, -0.5, 0.0, 0.5, 1.0):
+            v, _ = pose({k: tuple(x) for k, x in curl.items()}, (opp, tilt, 0, 0, 0))
+            q = to_out(v[tverts], c)
+            if hits(v, tverts) or q[:, 1].mean() < 0: continue
+            gap = np.hypot(q[:, 1], q[:, 2]).min() - PUMP_R
+            if bestopp is None or gap < bestopp[0]: bestopp = (gap, opp, tilt)
+    if bestopp: thumb[0], thumb[1] = float(bestopp[1]), bestopp[2]
+    for tj in (2, 3, 4):
+        moving = verts_of(THUMB[max(1, tj - 2):])
+        while thumb[tj] < 80:
+            thumb[tj] += 2
+            v, _ = pose({k: tuple(x) for k, x in curl.items()}, tuple(thumb))
+            if hits(v, moving): thumb[tj] -= 2; break
+    v, n = pose({k: tuple(x) for k, x in curl.items()}, tuple(thumb))
+    out = to_out(v, c); out[:, 0] -= np.median(out[:, 0])
+    wr = to_out(jpos['wrist'][None], c)[0]; wr[0] -= np.median(to_out(v, c)[:, 0])
+    print("pump wrist at", wr.round(1))
+    print("pump grip:", {f: [int(x) for x in curl[f]] for f in FINGERS}, "thumb", [int(x) for x in thumb])
+    return out, n @ R.T
+
 # posed frames for other tools (pump hand on the shotgun); path from RL_HAND_NPZ
 if os.environ.get('RL_HAND_NPZ'):
-    np.savez(os.environ['RL_HAND_NPZ'], xyz=np.array(xyz), nrm=np.array(nrm), idx=IDX, uv=UV, grip_centre=GRIP)
+    pump_xyz, pump_nrm = fit_pump()
+    np.savez(os.environ['RL_HAND_NPZ'], xyz=np.array(xyz), nrm=np.array(nrm), idx=IDX, uv=UV, grip_centre=GRIP,
+             pump_xyz=pump_xyz, pump_nrm=pump_nrm)
 
 if PREVIEW:
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt

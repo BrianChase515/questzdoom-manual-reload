@@ -110,17 +110,15 @@ print("pump centre:", np.round(pump_c, 1), " shell (chamber):", np.round(surfs[S
 if HANDNPZ:
     H = np.load(HANDNPZ)
     hx, hn, idx, uv = H['xyz'], H['nrm'], H['idx'], H['uv']
-    grip = hx[1 + 4 * 1]; gripn = hn[1 + 4 * 1]          # grip pose, orientation A
-    centre = H['grip_centre']
-    # The grip pose wraps a vertical post (the pistol grip). Pitch it 90 degrees so it
-    # wraps the horizontal forend instead: palm under the pump, forearm angled down/back.
-    a = math.radians(float(os.environ.get('RL_PUMP_PITCH', '-90')))
-    R = np.array([[math.cos(a), 0, math.sin(a)], [0, 1, 0], [-math.sin(a), 0, math.cos(a)]])
+    # hand closed round the pump by make_hand_md3.py (cylinder axis = +x through the
+    # origin, palm underneath); put that axis on the pump's axis.
     mir = np.array([1, -1, 1])
-    base = ((grip - centre) @ R.T) * mir
-    basen = (gripn @ R.T) * mir
-    off = np.array([float(x) for x in os.environ.get('RL_PUMP_OFFSET', '-7,0.5,-1.5').split(',')])
-    target = pump_c + off
+    base = H['pump_xyz'] * mir
+    basen = H['pump_nrm'] * mir
+    pv = surfs[PUMP]['xyz'][IDLE]
+    axis_c = np.array([pv[:, 0].mean(), (pv[:, 1].max() + pv[:, 1].min()) / 2, (pv[:, 2].max() + pv[:, 2].min()) / 2])
+    off = np.array([float(x) for x in os.environ.get('RL_PUMP_OFFSET', '0,0,0').split(',')])
+    target = axis_c + off
     nv = len(base)
     def hand_surf(xyz_frames, nrm, flip):
         t = idx[:, [0, 2, 1]] if flip else idx

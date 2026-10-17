@@ -43,8 +43,8 @@ QuestZDoom's own *Two Handed Weapons* option hides the off-hand model while it's
   home chambers the next shell from the tube. It only fires with a live shell chambered and the pump home.
 - With QuestZDoom's *Two Handed Weapons* on, the **grip** on the pump also steadies your aim along the
   line between your hands — the hand that steadies is the hand that pumps.
-- **Load:** off-hand **trigger** at your hip takes one shell; push it into the loading port under the
-  receiver. Repeat, up to 6 in the tube.
+- **Load:** off-hand **trigger** at your hip takes one shell (you'll see it pinched in your fingers);
+  push it into the port on the right side of the receiver. Repeat, up to 6 in the tube.
 - Flat screen: fire pumps automatically, Reload loads shells one at a time (fire to stop).
 
 ## Button reloading (non-VR, or physical off)

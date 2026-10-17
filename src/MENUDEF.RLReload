@@ -42,7 +42,7 @@ OptionMenu "RL_Settings"
 	StaticText "Shotgun", 1
 	Slider "Pump stroke length", "rl_sg_pump_len", 1, 6, 0.25, 2
 	Slider "Pump grab radius", "rl_sg_pump_r", 2, 14, 0.5, 1
-	Slider "Loading port radius", "rl_sg_port_r", 2, 10, 0.5, 1
+	Slider "Loading port radius", "rl_sg_load_r", 1, 8, 0.5, 1
 	StaticText " "
 	Option "Dropped mag loses its rounds", "rl_droppedmag_loses_rounds", "OnOff"
 	StaticText "Off = leftover rounds go back to your reserve", 1
