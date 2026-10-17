@@ -65,6 +65,8 @@ class RL_Pistol : Pistol
 	double lf, ls, lu;     // off hand relative to gun (forward, side, up)
 	double bh, bd, eyeH;   // off hand height above feet, distance from body, eye height
 	bool   nearWell, nearSlide, inHip;
+	Vector3 rawGun, rawOff, rawFwd, rawUp;   // raw engine values relative to the player, for the readout
+	double rawFwdLen;
 
 	Default
 	{
@@ -150,6 +152,14 @@ class RL_Pistol : Pistol
 
 		Measure(pm);
 
+		// calibration log: every grip squeeze / mag release writes a tagged line
+		if (RL_CVarInt('rl_log') != 0)
+		{
+			if (gripNow && !gripWas) RL_Log(pm, "GRIP");
+			if (magRelease) RL_Log(pm, "MAGRELEASE");
+			if (level.maptime % 70 == 0) RL_Log(pm, "TICK");
+		}
+
 		// ---- mag release (B) -------------------------------------------
 		if (magRelease && magSeated) EjectMag(pm);
 
@@ -219,6 +229,11 @@ class RL_Pistol : Pistol
 		Vector3 gp, gf, gs, gu, op, of, os, ou;
 		[gp, gf, gs, gu] = RL_VR.GunPose(pm);
 		[op, of, os, ou] = RL_VR.OffhandPose(pm);
+		rawGun = gp - pm.pos; rawOff = op - pm.pos; rawFwd = gf; rawUp = gu; rawFwdLen = gf.Length();
+		// guard against non-unit direction vectors
+		if (gf.Length() > 0.001) gf = gf.Unit();
+		if (gs.Length() > 0.001) gs = gs.Unit();
+		if (gu.Length() > 0.001) gu = gu.Unit();
 		Vector3 rel = op - gp;
 		lf = rel dot gf;
 		ls = rel dot gs;
@@ -234,7 +249,13 @@ class RL_Pistol : Pistol
 		Vector3 here  = (lf, ls, lu);
 		nearWell  = (here - well).Length()  < RL_CVarF('rl_well_r', 4);
 		nearSlide = (here - slide).Length() < RL_CVarF('rl_slide_r', 4);
-		inHip     = bh < eyeH * RL_CVarF('rl_hip_h', 0.65) && bd < RL_CVarF('rl_hip_r', 20);
+		inHip     = bh < eyeH * RL_CVarF('rl_hip_height', 0.65) && bd < RL_CVarF('rl_hip_r', 20);
+	}
+
+	void RL_Log(PlayerPawn pm, String tag)
+	{
+		Console.Printf("RLLOG %s t=%d hand=%d | rel gun f=%.1f s=%.1f u=%.1f | body h=%.1f d=%.1f | %s",
+			tag, level.maptime, hand, lf, ls, lu, bh, bd, RL_VR.RawDump(pm));
 	}
 
 	void EjectMag(PlayerPawn pm)

@@ -13,6 +13,8 @@ OptionMenu "RL_Settings"
 	StaticText "the slide and pull to rack.", 1
 	StaticText " "
 	Option "Show calibration readout", "rl_calibrate", "OnOff"
+	Option "Write calibration log", "rl_log", "OnOff"
+	StaticText "Log: every grip squeeze writes your hand position to questzdoom.log", 1
 	Option "Off-hand orientation", "rl_hand_orient", "RL_HandOrient"
 	StaticText " "
 	StaticText "Grab zones (game units, ~3 cm each)", 1
@@ -23,7 +25,7 @@ OptionMenu "RL_Settings"
 	Slider "Slide grab up", "rl_slide_u", -5, 10, 0.5, 1
 	Slider "Slide grab radius", "rl_slide_r", 1, 10, 0.5, 1
 	Slider "Rack length", "rl_rack_len", 0.5, 6, 0.25, 2
-	Slider "Hip height (x eye height)", "rl_hip_h", 0.3, 0.9, 0.05, 2
+	Slider "Hip height (x eye height)", "rl_hip_height", 0.3, 0.9, 0.05, 2
 	Slider "Hip distance from body", "rl_hip_r", 5, 40, 1, 0
 	StaticText " "
 	Option "Dropped mag loses its rounds", "rl_droppedmag_loses_rounds", "OnOff"

@@ -23,6 +23,11 @@ class RL_Calibrate : EventHandler
 			p.inHip ? "[HIP]" : "hip", p.nearWell ? "[MAGWELL]" : "magwell",
 			p.nearSlide ? "[SLIDE]" : "slide", handNames[clamp(p.hand, 0, 3)], p.slideShown));
 
+		lines.Push(String.Format("gun pos - player: %.1f %.1f %.1f   offhand - player: %.1f %.1f %.1f",
+			p.rawGun.x, p.rawGun.y, p.rawGun.z, p.rawOff.x, p.rawOff.y, p.rawOff.z));
+		lines.Push(String.Format("gun fwd %.2f %.2f %.2f (len %.2f)   up %.2f %.2f %.2f",
+			p.rawFwd.x, p.rawFwd.y, p.rawFwd.z, p.rawFwdLen, p.rawUp.x, p.rawUp.y, p.rawUp.z));
+
 		int y = 60;
 		for (int i = 0; i < lines.Size(); i++)
 		{

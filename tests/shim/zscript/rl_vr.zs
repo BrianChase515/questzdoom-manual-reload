@@ -52,4 +52,6 @@ class RL_VR play
 	static void SetOffhand(PlayerPawn p, Weapon w) {}
 
 	static PSprite OffhandPSprite(PlayerPawn p) { return null; }
+
+	static String RawDump(PlayerPawn p) { return "desktop shim"; }
 }

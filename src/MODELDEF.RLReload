@@ -98,26 +98,37 @@ Model RL_OffHand
 	Path "Models/Weapons/Hud/Pistol"
 	Model 0 "RL_Hand.md3"
 	Skin 0 "RL_Glove.png"
-	Model 1 "RL_Mag.md3"
-	Skin 1 "Pistol.png"
 	Scale -1.0 1.0 1.0
 	NOINTERPOLATION
 
 	FrameIndex RLHD A 0 0
 	FrameIndex RLHD B 0 1
-	FrameIndex RLHD C 0 2
-	FrameIndex RLHD C 1 1
 	FrameIndex RLHD D 0 3
 	FrameIndex RLHD E 0 4
 	FrameIndex RLHD F 0 5
-	FrameIndex RLHD G 0 6
-	FrameIndex RLHD G 1 2
 	FrameIndex RLHD H 0 7
 	FrameIndex RLHD I 0 8
 	FrameIndex RLHD J 0 9
+	FrameIndex RLHD L 0 11
+}
+
+// every model in a block is drawn on every frame of that block, so the magazine gets its own block
+Model RL_OffHand
+{
+	Path "Models/Weapons/Hud/Pistol"
+	Model 0 "RL_Hand.md3"
+	Skin 0 "RL_Glove.png"
+	Model 1 "RL_Mag.md3"
+	Skin 1 "Pistol.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RLHD C 0 2
+	FrameIndex RLHD C 1 1
+	FrameIndex RLHD G 0 6
+	FrameIndex RLHD G 1 2
 	FrameIndex RLHD K 0 10
 	FrameIndex RLHD K 1 3
-	FrameIndex RLHD L 0 11
 }
 
 // Dropped magazine

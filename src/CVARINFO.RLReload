@@ -13,6 +13,7 @@ server float rl_slide_u = 3;
 server float rl_slide_r = 4;
 server float rl_rack_len = 2.5;
 // hip pouch: off hand lower than this fraction of eye height, and this close to your body
-server float rl_hip_h = 0.65;
+server float rl_hip_height = 0.78;
 server float rl_hip_r = 20;
 user int rl_hand_orient = 1;
+user bool rl_log = false;
