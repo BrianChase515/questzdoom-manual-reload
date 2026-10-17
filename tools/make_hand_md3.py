@@ -12,7 +12,7 @@ RL_Mag.md3 gets frames 1..3 = the magazine sitting in the hand for each orientat
 Also writes RL_SupportA.md3 / RL_SupportB.md3 next to <out.md3>: the support hand
 wrapped round the pistol grip, and its mirror image.
 """
-import sys, math, struct
+import sys, math, struct, os
 import numpy as np
 from pygltflib import GLTF2
 
@@ -193,6 +193,40 @@ print("RL_Mag.md3 now has", 1 + len(mag_frames), "frames")
 xyz_by_pose = xyz
 xyz, nrm = fx, fn
 
+# ---- shotgun shell pinched between thumb and index (frames 1..3 of RL_ShotShell.md3)
+SHELLFILE = os.environ.get('RL_SHELL_MD3')
+if SHELLFILE and os.path.exists(SHELLFILE):
+    jn = {n: i for i, n in enumerate(names)}
+    def tipverts(joint):
+        k = jn[joint]
+        return np.where(((J == k) * W).sum(1) > 0.5)[0]
+    ti, ii = tipverts('thumb-tip'), tipverts('index-finger-tip')
+    sd = bytearray(open(SHELLFILE, 'rb').read())
+    _, snf, _, sns, _, s_ofr, _, s_osu, _ = struct.unpack('<9i', sd[72:108])
+    assert snf == 1 and sns == 1, "RL_ShotShell.md3 should be fresh (1 frame, 1 surface)"
+    o = s_osu
+    sf, _, nsh, snv, ntr, otr, osh, ost, oxyz, oe = struct.unpack('<10i', sd[o+68:o+108])
+    raw = np.frombuffer(bytes(sd[o+oxyz:o+oxyz+snv*8]), dtype=np.uint8).reshape(snv, 8)
+    sv = raw[:, :6].copy().view('<i2').reshape(snv, 3) / 64.0
+    sv = sv - sv.mean(0)
+    frames_s = [sv + 0]
+    for oi in range(3):
+        f = xyz[3 + 4 * oi]
+        pinch = (f[ti].mean(0) + f[ii].mean(0)) / 2
+        frames_s.append(sv + pinch)
+    verts = b''.join(np.concatenate([np.clip(np.round(v * 64), -32768, 32767).astype('<i2').view(np.uint8).reshape(snv, 6), raw[:, 6:8]], 1).tobytes() for v in frames_s)
+    frames_s[0] = frames_s[0] - np.array([0, 0, frames_s[0][:, 2].min()])
+    verts = b''.join(np.concatenate([np.clip(np.round(v * 64), -32768, 32767).astype('<i2').view(np.uint8).reshape(snv, 6), raw[:, 6:8]], 1).tobytes() for v in frames_s)
+    h = bytearray(sd[o:o+108]); h[68:108] = struct.pack('<10i', sf, 4, nsh, snv, ntr, otr, osh, ost, oxyz, oxyz + len(verts))
+    surf = bytes(h) + bytes(sd[o+108:o+oxyz]) + verts
+    fb = b''
+    for i, v in enumerate(frames_s):
+        fb += struct.pack('<3f3f3ff', *v.min(0), *v.max(0), 0, 0, 0, float(np.abs(v).max() * 1.8)) + f'shell{i}'.encode().ljust(16, b'\0')
+    o_su = 108 + len(fb)
+    hdr = bytes(sd[:72]) + struct.pack('<9i', 0, 4, 0, 1, 0, 108, o_su, o_su, o_su + len(surf))
+    open(SHELLFILE, 'wb').write(hdr + fb + surf)
+    print("RL_ShotShell.md3: added 3 in-hand frames")
+
 def enc_n(n):
     lat = np.arctan2(n[:, 1], n[:, 0]) * 255 / (2 * math.pi)
     lng = np.arccos(np.clip(n[:, 2], -1, 1)) * 255 / (2 * math.pi)
@@ -240,6 +274,10 @@ left_v = grip_v * mir + SUPPORT_OFFSET
 write_single(os.path.join(d, 'RL_SupportA.md3'), left_v, grip_n * mir, True)
 write_single(os.path.join(d, 'RL_SupportB.md3'), left_v * mir, grip_n, False)
 print("wrote RL_SupportA.md3 / RL_SupportB.md3")
+
+# posed frames for other tools (pump hand on the shotgun); path from RL_HAND_NPZ
+if os.environ.get('RL_HAND_NPZ'):
+    np.savez(os.environ['RL_HAND_NPZ'], xyz=np.array(xyz), nrm=np.array(nrm), idx=IDX, uv=UV, grip_centre=GRIP)
 
 if PREVIEW:
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt

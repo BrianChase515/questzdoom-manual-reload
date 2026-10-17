@@ -1,39 +1,30 @@
-// Calibration readout: Options -> Manual Reload -> "Show calibration readout".
-// Shows where the off hand is relative to the gun and to your body, and which
-// zones it is in, so the grab distances can be tuned on the headset.
+// Calibration prompts (always) and the calibration readout
+// (Options -> Manual Reload -> "Show calibration readout") for whichever
+// physical weapon is in your hand.
 class RL_Calibrate : EventHandler
 {
 	override void RenderOverlay(RenderEvent e)
 	{
 		let pm = players[consoleplayer].mo;
 		if (!pm) return;
-		let p = RL_Pistol(pm.FindInventory("RL_Pistol"));
+		let p = RL_PhysWeapon(players[consoleplayer].ReadyWeapon);
 		if (!p) return;
 
 		if (p.calStep > 0)
-		{
-			String msg = p.calStep == 1
-				? "CALIBRATING 1/2: hold the pistol, put your off hand where you'd SEAT A MAG (bottom of the grip) and squeeze grip"
-				: "CALIBRATING 2/2: now put your off hand on the BACK OF THE SLIDE and squeeze grip";
-			Screen.DrawText(SmallFont, Font.CR_YELLOW, 10, 40, msg,
+			Screen.DrawText(SmallFont, Font.CR_YELLOW, 10, 40, p.CalPrompt(p.calStep - 1),
 				DTA_VirtualWidth, 480, DTA_VirtualHeight, 300, DTA_KeepRatio, true);
-		}
 
 		CVar cv = CVar.FindCVar('rl_calibrate');
 		if (!cv || !cv.GetBool()) return;
 
-		static const String handNames[] = { "empty", "HOLDING MAG", "ON SLIDE", "grip", "ON GUN" };
+		static const String handNames[] = { "empty", "HOLDING", "ON ACTION", "grip", "ON GUN" };
 		Array<String> lines;
-		lines.Push(String.Format("physical %s   mag %s   slide %s   chamber %d   mag %d",
-			p.physActive ? "ON" : "off", p.magSeated ? "IN" : "OUT",
-			p.slideLocked ? "LOCKED" : "fwd", pm.CountInv("RL_PistolChamber"), pm.CountInv("RL_PistolMag")));
+		lines.Push(String.Format("physical %s   hand: %s   two-handed steady (QuestZDoom): %s",
+			p.physActive ? "ON" : "off", handNames[clamp(p.hand, 0, 4)], p.steadied ? "YES" : "no"));
+		lines.Push(p.StatusLine());
 		lines.Push(String.Format("hand vs gun:  fwd %.1f  side %.1f  up %.1f", p.lf, p.ls, p.lu));
 		lines.Push(String.Format("hand vs body: height %.1f (eye %.1f)  dist %.1f", p.bh, p.eyeH, p.bd));
-		lines.Push(String.Format("zones: %s %s %s   hand: %s   slide %.2f",
-			p.inHip ? "[HIP]" : "hip", p.nearWell ? "[MAGWELL]" : "magwell",
-			p.nearSlide ? "[SLIDE]" : "slide", handNames[clamp(p.hand, 0, 4)], p.slideShown));
-		lines.Push(String.Format("two-handed steady (QuestZDoom): %s", p.steadied ? "YES" : "no"));
-
+		lines.Push(p.ZoneLine());
 		lines.Push(String.Format("gun pos - player: %.1f %.1f %.1f   offhand - player: %.1f %.1f %.1f",
 			p.rawGun.x, p.rawGun.y, p.rawGun.z, p.rawOff.x, p.rawOff.y, p.rawOff.z));
 		lines.Push(String.Format("gun fwd %.2f %.2f %.2f (len %.2f)   up %.2f %.2f %.2f",

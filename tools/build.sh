@@ -17,10 +17,17 @@ cp -r "$ROOT/src/." "$W/pk3"
 if [ $TEST = 1 ]; then cp -r "$ROOT/tests/shim/." "$W/pk3/"; fi
 P="$W/pk3/Models/Weapons/Hud/Pistol"; mkdir -p "$P" "$W/pk3/sounds/rlreload" "$W/x"
 
-# models: pistol (+ tactical / physical frames), standalone magazine, posed hand
+# models: pistol (+ tactical / physical frames), standalone magazine, posed hand,
+#         shotgun (+ pump frames), shell, hand on the pump
+G="$W/pk3/Models/Weapons/Hud/Shotgun"; mkdir -p "$G"
 unzip -q -j -o "$HDVR" 'Models/Weapons/Hud/Pistol/Pistol.md3' -d "$W/x"
+unzip -q -j -o "$HDVR" 'Models/Weapons/Hud/Shotgun/Shotgun.md3' -d "$W/x"
 python3 -I "$ROOT/tools/make_tactical_md3.py" "$W/x/Pistol.md3" "$P/RL_Pistol.md3" "$P/RL_Mag.md3" "$P/RL_Round.md3" "$P/RL_Casing.md3"
-python3 -I "$ROOT/tools/make_hand_md3.py" "$ROOT/assets/webxr-hand/right.glb" "$P/RL_Hand.md3" "$P/RL_Mag.md3"
+python3 -I "$ROOT/tools/make_shotgun_md3.py" "$W/x/Shotgun.md3" "$G"
+RL_SHELL_MD3="$G/RL_ShotShell.md3" RL_HAND_NPZ="$W/x/hand.npz" \
+	python3 -I "$ROOT/tools/make_hand_md3.py" "$ROOT/assets/webxr-hand/right.glb" "$P/RL_Hand.md3" "$P/RL_Mag.md3"
+RL_PUMPHANDS_ONLY=1 python3 -I "$ROOT/tools/make_shotgun_md3.py" "$W/x/Shotgun.md3" "$G" "$W/x/hand.npz"
+cp "$P/RL_Hand.md3" "$P/RL_Glove.png" "$G/"
 
 # sounds
 for n in RELOAD PRel.ogg DRYFIRE; do unzip -q -j -o "$BD" "SOUNDS/COMBAT/WEAPONS/$n" -d "$W/x"; done
@@ -35,6 +42,10 @@ cut "$W/x/PRel.ogg" RLSLBACK -t 0.45 -af "afade=t=out:st=0.38:d=0.07"
 cut "$W/x/DRYFIRE"  RLDRY
 cut "$W/x/CLIPICK"  RLPOUCH
 cp "$W/x/"DSBOUNC1* "$S/RLBNC1.lmp"; cp "$W/x/"DSBOUNC2* "$S/RLBNC2.lmp"
+# shotgun pump: HDVR's pump sound split into the back and forward strokes
+unzip -q -j -o "$HDVR" 'SOUNDS/Weapons/STGNPUMP' -d "$W/x"
+cut "$W/x/STGNPUMP" RLSGBACK -t 0.22 -af "afade=t=out:st=0.18:d=0.04"
+cut "$W/x/STGNPUMP" RLSGFWD  -ss 0.30 -af "afade=t=in:st=0:d=0.01"
 
 rm -f "$OUT"; (cd "$W/pk3" && zip -q -r -X "$OUT" .)
 echo "built $OUT"

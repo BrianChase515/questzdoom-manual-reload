@@ -30,7 +30,7 @@ Status: ✅ done · 🧪 needs headset test · 📝 proposed (needs Brian's OK)
 | Weapon | Real-world model | Capacity | Reload style | Animation source | Status |
 |---|---|---|---|---|---|
 | Pistol | Beretta 92FS | 15+1 | Physical: B release, hip draw, tap to seat, grab-and-rack; slide lock on empty mag. Button mode: tactical / empty auto sequences. | HDVR frames 8–26 (empty); generated 38–55 (tactical), 56–73 (slide steps, mag in/out) | ✅ desktop sim · 🧪 headset |
-| Shotgun | Pump (Rem 870 style) | 📝 6+1 tube | 📝 Shell-by-shell; reload can be interrupted by fire; pump if chamber empty | 📝 HDVR Shotgun.md3 has 36 frames, ~7 used; 22–31 look like a loading motion — verify | 📝 |
+| Shotgun | Pump (Rem 870 style) | 6+1 tube | Physical: pump by hand (eject on back, feed on forward), shells one at a time from hip into loading port; QuestZDoom two-handed steadying on the pump. Button: auto-pump, shell-by-shell reload | HDVR surfaces: 2 shell, 4 pump, 5 bolt; frames 33–35 pump, 22–31 load; generated 36–53 pump steps ± shell; pump hand md3 | ✅ desktop sim · 🧪 headset |
 | Super Shotgun | Double-barrel | 2 | 📝 Manual break-open: only reloads when you press reload (vanilla auto-reloads after every shot) | HDVR ssg.md3 already has open/load/close (frames 26–45) | 📝 |
 | Chaingun | — | 📝 100-round belt box (vanilla uses Clip) | 📝 Box swap | 📝 No reload frames; generate a tilt-down/up | 📝 |
 | Rocket Launcher | — | 📝 1 in tube? or 4-round mag | 📝 Single load | 📝 RPG.md3 frames 17–33 move sub-parts — likely a load; verify | 📝 |
@@ -48,6 +48,11 @@ Status: ✅ done · 🧪 needs headset test · 📝 proposed (needs Brian's OK)
 7. Sounds into SNDINFO + build.sh.
 8. Run the engine test harness (section 4) — counts must match expected for: start, fire N, tactical, empty, full no-op, zero reserve.
 9. Headset test, then tick the table.
+
+## 2b. Framework
+`RL_PhysWeapon` (src/zscript/rl_base.zs) owns hand tracking, off-hand model, zones (`InZone(prefix,...)` reads
+`<prefix>_f/_s/_u/_r` cvars), calibration wizard (per-weapon `CalZone/CalPrompt`), logging and ejecta.
+A weapon overrides `PhysTick`, `OffhandPose`, `StatusLine/ZoneLine` and draws its own model frames.
 
 ## 3. Engine lessons (the trial-and-error, written down)
 
@@ -76,6 +81,9 @@ Status: ✅ done · 🧪 needs headset test · 📝 proposed (needs Brian's OK)
 - Mod cvars are saved in the player's config, so changing a default does nothing for existing players —
   rename the cvar when a default must change.
 - Every model in a MODELDEF block is drawn on every frame of that block; give optional parts their own block.
+- Mods can't change engine cvars (e.g. `vr_two_handed_weapons`) outside menus — detect the engine's
+  two-handed steadying instead (gun forward == gun→off-hand line).
+- Overrides of `clearscope` virtuals must not repeat `clearscope`; `cross`/`dot` are operators, not names.
 - Calibration wizard (`rl_calib_request`) records magwell / slide spots from the player's own hands.
 - Deliveries to the laptop are verified by pulling the file back and comparing hashes.
 

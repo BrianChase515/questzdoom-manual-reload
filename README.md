@@ -3,7 +3,7 @@
 Adds magazine-based manual reloading to the vanilla Doom weapons when played with the
 HDVR 3D weapon packs in QuestZDoom (Meta Quest). No Brutal Doom required.
 
-**Status:** Pistol done (Beretta 92FS style). Other weapons next.
+**Status:** Pistol (Beretta 92FS style) and pump shotgun (870 style, 6+1) done. More weapons next.
 
 ## Physical reloading (VR, default)
 Your off hand is visible (rigged WebXR hand model) and does the work:
@@ -29,6 +29,16 @@ grab-zone sliders, and a **calibration readout** that shows your hand's position
 gun so the zones can be tuned. Jumping is disabled (B is the mag release).
 
 QuestZDoom's own *Two Handed Weapons* option hides the off-hand model while it's steadying the gun.
+
+## Shotgun (physical)
+- **Work the pump with your off hand** (grip or trigger on the pump). Pulling it fully back ejects
+  what's in the chamber: a fired hull, or a live shell (which goes back to your reserve). Pushing it
+  home chambers the next shell from the tube. It only fires with a live shell chambered and the pump home.
+- With QuestZDoom's *Two Handed Weapons* on, the **grip** on the pump also steadies your aim along the
+  line between your hands — the hand that steadies is the hand that pumps.
+- **Load:** off-hand **trigger** at your hip takes one shell; push it into the loading port under the
+  receiver. Repeat, up to 6 in the tube.
+- Flat screen: fire pumps automatically, Reload loads shells one at a time (fire to stop).
 
 ## Button reloading (non-VR, or physical off)
 - 15-round magazine + 1 in the chamber (15+1).

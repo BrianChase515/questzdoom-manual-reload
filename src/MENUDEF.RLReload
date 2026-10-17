@@ -12,7 +12,7 @@ OptionMenu "RL_Settings"
 	StaticText "Push it into the grip to seat. Grip the back of", 1
 	StaticText "the slide and pull to rack.", 1
 	StaticText " "
-	Command "Calibrate grab zones (follow the prompts)", "set rl_calib_request 1"
+	Command "Calibrate grab zones for the gun in your hand", "set rl_calib_request 1"
 	Option "Show calibration readout", "rl_calibrate", "OnOff"
 	Option "Write calibration log", "rl_log", "OnOff"
 	StaticText "Log: every grip squeeze writes your hand position to questzdoom.log", 1
@@ -30,6 +30,11 @@ OptionMenu "RL_Settings"
 	Slider "Rack length", "rl_rack_len", 0.5, 6, 0.25, 2
 	Slider "Hip height (x eye height)", "rl_hip_height", 0.3, 0.9, 0.05, 2
 	Slider "Hip distance from body", "rl_hip_r", 5, 40, 1, 0
+	StaticText " "
+	StaticText "Shotgun", 1
+	Slider "Pump stroke length", "rl_sg_pump_len", 1, 6, 0.25, 2
+	Slider "Pump grab radius", "rl_sg_pump_r", 2, 14, 0.5, 1
+	Slider "Loading port radius", "rl_sg_port_r", 2, 10, 0.5, 1
 	StaticText " "
 	Option "Dropped mag loses its rounds", "rl_droppedmag_loses_rounds", "OnOff"
 	StaticText "Off = leftover rounds go back to your reserve", 1

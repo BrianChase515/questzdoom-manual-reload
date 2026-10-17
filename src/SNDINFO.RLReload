@@ -8,3 +8,6 @@ rl/pistol/pouch     RLPOUCH
 $random rl/pistol/magdrop { rl/pistol/magdrop1 rl/pistol/magdrop2 }
 rl/pistol/magdrop1 RLBNC1
 rl/pistol/magdrop2 RLBNC2
+
+rl/shotgun/pumpback RLSGBACK
+rl/shotgun/pumpfwd  RLSGFWD

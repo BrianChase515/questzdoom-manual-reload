@@ -38,42 +38,21 @@ class RL_PistolChamber : Inventory
 	}
 }
 
-class RL_Pistol : Pistol
+class RL_Pistol : RL_PhysWeapon
 {
 	const MAGSIZE = 15;
 
-	// hand states for the physical reload
-	enum EHand
-	{
-		HAND_EMPTY,
-		HAND_MAG,       // holding a fresh magazine
-		HAND_SLIDE,     // pinching the slide
-		HAND_GRIP,      // gripping nothing in particular
-		HAND_SUPPORT    // two-handed grip on the pistol
-	};
-
-	// ---- physical-reload state (public so the calibration overlay can read it)
-	bool   physActive;
 	bool   magSeated;
 	bool   slideLocked;
-	int    hand;
 	int    heldRounds;
 	double grabF;          // off-hand forward position when the slide was grabbed
 	bool   cycled;         // slide pulled far enough to cycle
 	double slideShown;     // 0 = forward, 1 = locked back (drives the model)
-	int    prevButtons;
-	// last measured positions, for calibration
-	double lf, ls, lu;     // off hand relative to gun (forward, side, up)
-	double bh, bd, eyeH;   // off hand height above feet, distance from body, eye height
-	bool   nearWell, nearSlide, inHip, nearGun;
-	bool   steadied;       // QuestZDoom's two-handed mode is aiming the gun at the off hand
-	int    steadyTics;
-	int    calStep;      // 0 = off, 1 = waiting for magwell squeeze, 2 = waiting for slide squeeze
-	Vector3 rawGun, rawOff, rawFwd, rawUp;   // raw engine values relative to the player, for the readout
-	double rawFwdLen;
+	bool   nearWell, nearSlide;
 
 	Default
 	{
+		Weapon.SelectionOrder 1900;
 		Weapon.AmmoType1 "Clip";
 		Weapon.AmmoUse1 0;          // rounds come out of the magazine, not the reserve
 		Weapon.AmmoGive1 20;
@@ -81,30 +60,10 @@ class RL_Pistol : Pistol
 		Weapon.AmmoUse2 0;
 		Weapon.AmmoGive2 0;
 		Weapon.SlotNumber 2;
-		+WEAPON.AMMO_OPTIONAL
-		+WEAPON.ALT_AMMO_OPTIONAL
-	}
-
-	// ---- helpers ---------------------------------------------------------
-
-	static int RL_CVarInt(Name n, int def = 0)
-	{
-		CVar cv = CVar.FindCVar(n);
-		return cv ? cv.GetInt() : def;
-	}
-
-	static double RL_CVarF(Name n, double def = 0)
-	{
-		CVar cv = CVar.FindCVar(n);
-		return cv ? cv.GetFloat() : def;
-	}
-
-	// Look a class up at run time, so this mod still loads if the
-	// HDVR pack (which defines the "enhanced" effects) is missing.
-	static class<Actor> RL_FindActor(Name n, class<Actor> fallback = null)
-	{
-		class<Actor> c = n;
-		return c ? c : fallback;
+		Obituary "$OB_MPPISTOL";
+		Inventory.Pickupmessage "$PICKUP_PISTOL_DROPPED";
+		Tag "$TAG_PISTOL";
+		+WEAPON.WIMPY_WEAPON
 	}
 
 	// The gun comes loaded the first time you get it (15+1).
@@ -123,84 +82,54 @@ class RL_Pistol : Pistol
 
 	action bool RL_Chambered() { return CountInv("RL_PistolChamber") > 0; }
 	action int  RL_MagCount()  { return CountInv("RL_PistolMag"); }
-	action bool RL_Physical()  { return invoker.physActive; }
 
-	// ======================================================================
-	//  PHYSICAL RELOAD  -  runs every tic while the pistol is owned
-	// ======================================================================
+	// ---- framework hooks ------------------------------------------------------
 
-	override void DoEffect()
+	override int CalZoneCount() { return 2; }
+	override Name CalZone(int i) { return i == 0 ? 'rl_well' : 'rl_slide'; }
+	override String CalPrompt(int i)
 	{
-		Super.DoEffect();
-		let pm = PlayerPawn(Owner);
-		if (!pm || !pm.player || pm.player.mo != pm) return;
+		return i == 0
+			? "CALIBRATING PISTOL 1/2: put your off hand where you'd SEAT A MAG (bottom of the grip) and squeeze"
+			: "CALIBRATING PISTOL 2/2: now put your off hand on the BACK OF THE SLIDE and squeeze";
+	}
+	override String StatusLine()
+	{
+		return String.Format("PISTOL  mag %s   slide %s   chamber %d   mag %d   slide pos %.2f",
+			magSeated ? "IN" : "OUT", slideLocked ? "LOCKED" : "fwd",
+			Owner.CountInv("RL_PistolChamber"), Owner.CountInv("RL_PistolMag"), slideShown);
+	}
+	override String ZoneLine()
+	{
+		return String.Format("zones: %s %s %s", inHip ? "[HIP]" : "hip",
+			nearWell ? "[MAGWELL]" : "magwell", nearSlide ? "[SLIDE]" : "slide");
+	}
 
-		physActive = RL_VR.Active(pm) && RL_CVarInt('rl_physical', 1) != 0;
-		if (!physActive) { hand = HAND_EMPTY; slideShown = 0; return; }
+	override void PhysOff(PlayerPawn pm) { slideShown = 0; }
 
-		EnsureOffhand(pm);
+	override void OnHolster(PlayerPawn pm)
+	{
+		if (hand == HAND_HELD) StowHeldMag(pm);
+	}
 
-		int buttons = pm.player.cmd.buttons;
-		bool gripNow  = (buttons & BT_RELOAD) != 0;
-		bool gripWas  = (prevButtons & BT_RELOAD) != 0;
-		bool magRelease = (buttons & BT_JUMP) && !(prevButtons & BT_JUMP);
-		prevButtons = buttons;
+	override void PhysTick(PlayerPawn pm, bool gripNow, bool gripWas, bool magRelease)
+	{
+		nearWell  = InZone('rl_well', -1, 0, -7, 4);
+		nearSlide = InZone('rl_slide', -4, 0, 3, 4);
+		nearGun   = nearGun || nearWell;
 
-		if (pm.player.ReadyWeapon != self)
-		{
-			// Gun put away: stow anything in the off hand.
-			if (hand == HAND_MAG) StowHeldMag(pm);
-			hand = HAND_EMPTY;
-			return;
-		}
-
-		Measure(pm);
-
-		// ---- grab-zone calibration wizard ---------------------------------
-		CVar req = CVar.FindCVar('rl_calib_request');
-		if (req && req.GetInt() != 0) { req.SetInt(0); calStep = 1; hand = HAND_EMPTY; }
-		if (calStep > 0)
-		{
-			if (gripNow && !gripWas)
-			{
-				if (calStep == 1)
-				{
-					SetF('rl_well_f', lf); SetF('rl_well_s', ls); SetF('rl_well_u', lu);
-					pm.A_StartSound("rl/pistol/magin", CHAN_AUTO);
-					calStep = 2;
-				}
-				else
-				{
-					SetF('rl_slide_f', lf); SetF('rl_slide_s', ls); SetF('rl_slide_u', lu);
-					pm.A_StartSound("rl/pistol/slide", CHAN_AUTO);
-					calStep = 0;
-				}
-				if (RL_CVarInt('rl_log') != 0) RL_Log(pm, "CALIBRATE");
-			}
-			slideShown = slideLocked ? 1 : 0;
-			return;                       // no reload actions while calibrating
-		}
-
-		// calibration log: every grip squeeze / mag release writes a tagged line
-		if (RL_CVarInt('rl_log') != 0)
-		{
-			if (gripNow && !gripWas) RL_Log(pm, "GRIP");
-			if (magRelease) RL_Log(pm, "MAGRELEASE");
-			if (level.maptime % 70 == 0) RL_Log(pm, "TICK");
-		}
-
-		// ---- QuestZDoom two-handed hold: the grip (not the trigger) is holding the gun
-		if (steadied && gripNow && hand != HAND_MAG) { hand = HAND_SUPPORT; cycled = false; }
+		// QuestZDoom two-handed hold: the grip (not the trigger) is holding the gun
+		if (steadied && gripNow && hand != HAND_HELD) { hand = HAND_SUPPORT; cycled = false; }
 
 		// ---- mag release (B) -------------------------------------------
 		if (magRelease && magSeated) EjectMag(pm);
 
-		// ---- grip pressed -----------------------------------------------
+		// ---- grab -----------------------------------------------------------
 		if (gripNow && !gripWas && hand == HAND_EMPTY)
 		{
 			if (nearSlide)
 			{
-				hand = HAND_SLIDE;
+				hand = HAND_ACTION;
 				grabF = lf;
 				cycled = false;
 			}
@@ -209,18 +138,18 @@ class RL_Pistol : Pistol
 			{
 				heldRounds = min(MAGSIZE, pm.CountInv("Clip"));
 				pm.TakeInventory("Clip", heldRounds);
-				hand = HAND_MAG;
+				hand = HAND_HELD;
 				pm.A_StartSound("rl/pistol/pouch", CHAN_AUTO);
 			}
 			else hand = HAND_GRIP;
 		}
 
-		// ---- grip held ---------------------------------------------------
+		// ---- holding ------------------------------------------------------
 		if (gripNow)
 		{
-			if (hand == HAND_MAG && nearWell && !magSeated) SeatMag(pm);
+			if (hand == HAND_HELD && nearWell && !magSeated) SeatMag(pm);
 
-			if (hand == HAND_SLIDE)
+			if (hand == HAND_ACTION)
 			{
 				double rackLen = RL_CVarF('rl_rack_len', 2.5);
 				double pull = clamp((grabF - lf) / rackLen, 0, 1);
@@ -240,70 +169,22 @@ class RL_Pistol : Pistol
 						{
 							pm.TakeInventory("RL_PistolChamber", 1);
 							pm.GiveInventory("Clip", 1);      // ejected round is picked back up
-							EjectRound(pm);
+							Eject(pm, "RL_EjectedRound", RL_CVarF('rl_port_f', 4), RL_CVarF('rl_port_u', 1.5));
 						}
 						pm.A_StartSound("rl/pistol/slideback", CHAN_AUTO);
 					}
 				}
 			}
 		}
-		// ---- grip released -----------------------------------------------
+		// ---- let go ---------------------------------------------------------
 		else if (gripWas)
 		{
-			if (hand == HAND_SLIDE && cycled) SlideForward(pm);
-			if (hand == HAND_MAG) StowHeldMag(pm);
+			if (hand == HAND_ACTION && cycled) SlideForward(pm);
+			if (hand == HAND_HELD) StowHeldMag(pm);
 			hand = HAND_EMPTY;
 		}
 
-		if (hand != HAND_SLIDE) slideShown = slideLocked ? 1 : 0;
-	}
-
-	void Measure(PlayerPawn pm)
-	{
-		Vector3 gp, gf, gs, gu, op, of, os, ou;
-		[gp, gf, gs, gu] = RL_VR.GunPose(pm);
-		[op, of, os, ou] = RL_VR.OffhandPose(pm);
-		rawGun = gp - pm.pos; rawOff = op - pm.pos; rawFwd = gf; rawUp = gu; rawFwdLen = gf.Length();
-		// guard against non-unit direction vectors
-		if (gf.Length() > 0.001) gf = gf.Unit();
-		if (gs.Length() > 0.001) gs = gs.Unit();
-		if (gu.Length() > 0.001) gu = gu.Unit();
-		Vector3 rel = op - gp;
-		lf = rel dot gf;
-		ls = rel dot gs;
-		lu = rel dot gu;
-
-		Vector3 brel = op - pm.pos;
-		bh = brel.z;
-		bd = brel.xy.Length();
-		eyeH = pm.player.viewz - pm.pos.z;
-
-		Vector3 well  = (RL_CVarF('rl_well_f', -1), RL_CVarF('rl_well_s', 0), RL_CVarF('rl_well_u', -7));
-		Vector3 slide = (RL_CVarF('rl_slide_f', -4), RL_CVarF('rl_slide_s', 0), RL_CVarF('rl_slide_u', 3));
-		Vector3 here  = (lf, ls, lu);
-		nearWell  = (here - well).Length()  < RL_CVarF('rl_well_r', 4);
-		nearSlide = (here - slide).Length() < RL_CVarF('rl_slide_r', 4);
-		nearGun   = nearWell || here.Length() < RL_CVarF('rl_support_r', 8);
-
-		// Engine two-handed mode: the gun's forward axis lines up with the gun->off-hand
-		// line (heights are squashed by the 1.2 pixel stretch in world units).
-		Vector3 hl = (rel.x, rel.y, rel.z * 1.2);
-		bool aligned = hl.Length() > 2 && (gf dot hl.Unit()) > cos(RL_CVarF('rl_steady_deg', 3));
-		steadyTics = aligned ? min(steadyTics + 1, 10) : 0;
-		steadied = steadyTics >= 2;
-		inHip     = bh < eyeH * RL_CVarF('rl_hip_height', 0.65) && bd < RL_CVarF('rl_hip_r', 20);
-	}
-
-	static void SetF(Name n, double v)
-	{
-		CVar c = CVar.FindCVar(n);
-		if (c) c.SetFloat(v);
-	}
-
-	void RL_Log(PlayerPawn pm, String tag)
-	{
-		Console.Printf("RLLOG %s t=%d hand=%d | rel gun f=%.1f s=%.1f u=%.1f | body h=%.1f d=%.1f | %s",
-			tag, level.maptime, hand, lf, ls, lu, bh, bd, RL_VR.RawDump(pm));
+		if (hand != HAND_ACTION) slideShown = slideLocked ? 1 : 0;
 	}
 
 	void EjectMag(PlayerPawn pm)
@@ -318,39 +199,11 @@ class RL_Pistol : Pistol
 		pm.A_StartSound("rl/pistol/magout", CHAN_WEAPON);
 
 		// drop a magazine you can see fall
-		Vector3 gp, gf, gs, gu;
-		[gp, gf, gs, gu] = RL_VR.GunPose(pm);
-		Vector3 at = gp + gf * RL_CVarF('rl_well_f', -1) + gs * RL_CVarF('rl_well_s', 0) + gu * (RL_CVarF('rl_well_u', -7) + 1.5);
-		let m = Actor.Spawn("RL_DroppedMag", at);
+		let m = Actor.Spawn("RL_DroppedMag", GunPoint(RL_CVarF('rl_well_f', -1), RL_CVarF('rl_well_s', 0), RL_CVarF('rl_well_u', -7) + 1.5));
 		if (m)
 		{
 			m.angle = pm.angle;
 			m.vel = pm.vel + gu * -1.5;
-		}
-	}
-
-	// A live round flies out of the ejection port (right side, top of the slide).
-	void EjectRound(PlayerPawn pm) { EjectFromPort(pm, "RL_EjectedRound"); }
-	void EjectCasing(PlayerPawn pm) { if (pm) EjectFromPort(pm, "RL_Casing"); }
-
-	void EjectFromPort(PlayerPawn pm, class<Actor> what)
-	{
-		Vector3 gp, gf, gs, gu;
-		if (RL_VR.Active(pm)) [gp, gf, gs, gu] = RL_VR.GunPose(pm);
-		else
-		{
-			// flat screen: approximate the gun just below and in front of the eyes
-			gf = (Actor.AngleToVector(pm.angle, cos(pm.pitch)), -sin(pm.pitch));
-			gs = (Actor.AngleToVector(pm.angle + 90, 1), 0);
-			gu = (0, 0, 1);
-			gp = pm.pos + (0, 0, pm.player.viewheight - 10) + gf * 10;
-		}
-		Vector3 at = gp + gf * RL_CVarF('rl_port_f', 4) + gu * RL_CVarF('rl_port_u', 1.5) - gs * 1;
-		let r = Actor.Spawn(what, at);
-		if (r)
-		{
-			r.angle = pm.angle + frandom(-60, 60);
-			r.vel = pm.vel - gs * frandom(2.5, 3.5) + gu * frandom(2.5, 3.5) + gf * frandom(-0.5, 0.5);
 		}
 	}
 
@@ -387,23 +240,8 @@ class RL_Pistol : Pistol
 		slideShown = slideLocked ? 1 : 0;
 	}
 
-	// Keep a hand in the off-hand slot while playing in VR.
-	void EnsureOffhand(PlayerPawn pm)
-	{
-		let cur = RL_VR.GetOffhand(pm);
-		if (cur is "RL_OffHand") return;
-		if (cur != null) return;                    // player chose a real off-hand weapon
-		let h = Weapon(pm.FindInventory("RL_OffHand"));
-		if (!h)
-		{
-			pm.GiveInventory("RL_OffHand", 1);
-			h = Weapon(pm.FindInventory("RL_OffHand"));
-		}
-		if (h) RL_VR.SetOffhand(pm, h);
-	}
-
 	// ======================================================================
-	//  BUTTON RELOAD (non-VR)  -  unchanged from v1
+	//  BUTTON RELOAD (non-VR)
 	// ======================================================================
 
 	//   0 = nothing, 1 = tactical, 2 = empty (slide locked), 3 = slide release only
@@ -439,7 +277,7 @@ class RL_Pistol : Pistol
 		bool enhanced = RL_CVarInt('evw_weapons') == 1;
 		class<Actor> puff = enhanced ? RL_FindActor('EnBulletPuff', "BulletPuff") : (class<Actor>)("BulletPuff");
 		A_FireBullets(5.6, 0, 1, 5, puff, 0);   // flags 0 = don't touch the reserve
-		invoker.EjectCasing(PlayerPawn(self));
+		invoker.Eject(PlayerPawn(self), "RL_Casing", RL_CVarF('rl_port_f', 4), RL_CVarF('rl_port_u', 1.5));
 
 		if (RL_MagCount() > 0)
 		{
@@ -453,19 +291,7 @@ class RL_Pistol : Pistol
 		}
 	}
 
-	action void RL_BarrelSmoke()
-	{
-		if (RL_CVarInt('evw_weapons') != 1) return;
-		class<Actor> smoke = RL_FindActor('GunBarrelSmoke');
-		if (smoke) A_FireProjectile(smoke, 0, false, 0, 0, FPF_NOAUTOAIM, 0);
-	}
-
-	action void RL_Tracer()
-	{
-		if (RL_CVarInt('evw_tracers') == 0) return;
-		class<Actor> tracer = RL_FindActor('BulletTracer');
-		if (tracer) A_FireProjectile(tracer, 0, false, 0, 0, FPF_NOAUTOAIM, 0);
-	}
+	action void RL_Tracer() { RL_Tracers(1); }
 
 	action void RL_DropMag()
 	{
@@ -497,10 +323,8 @@ class RL_Pistol : Pistol
 		}
 	}
 
-	action bool RL_FastSwitch() { return RL_CVarInt('evw_fastswitch') != 0; }
-
 	// In physical mode the model frame comes from the gun's real state
-	// (mag in/out, slide position) instead of the animation.
+	// (mag in/out, slide position, support hand) instead of the animation.
 	// slide < 0 means "use the live slide position".
 	action void RL_PhysVisual(double slide = -1)
 	{
@@ -663,170 +487,9 @@ class RL_Pistol : Pistol
 	Reload.SlideOnly:
 		RLPI F 4;
 		Goto Reload.Release;
-	}
-}
-
-// ---------------------------------------------------------------------------
-//  The off hand.  Lives in QuestZDoom's off-hand weapon slot; its pose follows
-//  what the pistol's physical reload is doing.
-// ---------------------------------------------------------------------------
-class RL_OffHand : Weapon
-{
-	Default
-	{
-		Weapon.SelectionOrder 99999;
-		Tag "Off hand";
-		+WEAPON.CHEATNOTWEAPON
-		+WEAPON.NOAUTOFIRE
-		+WEAPON.WIMPY_WEAPON
-		+WEAPON.AMMO_OPTIONAL
-		+INVENTORY.UNDROPPABLE
-		+INVENTORY.UNTOSSABLE
-	}
-
-	// pose: 0 open, 1 grip, 2 holding mag, 3 pinching slide (+4 per orientation)
-	action void RL_HandPose()
-	{
-		if (!player) return;
-		let pistol = RL_Pistol(FindInventory("RL_Pistol"));
-		int f = 0;
-		if (pistol && player.ReadyWeapon == pistol && pistol.physActive)
-		{
-			switch (pistol.hand)
-			{
-				case RL_Pistol.HAND_MAG:   f = 2; break;
-				case RL_Pistol.HAND_SLIDE: f = 3; break;
-				case RL_Pistol.HAND_GRIP:  f = 1; break;
-				case RL_Pistol.HAND_SUPPORT: f = -1; break;   // drawn on the gun instead
-			}
-		}
-		else if (player.cmd.buttons & BT_RELOAD) f = 1;
-		let me = RL_VR.OffhandPSprite(PlayerPawn(self));
-		if (!me) return;
-		if (f < 0)
-		{
-			me.Sprite = invoker.FindState("Spr.Hidden").sprite;
-			me.Frame = 0;
-			return;
-		}
-		me.Sprite = invoker.FindState("Ready").sprite;
-		me.Frame = f + 4 * clamp(RL_Pistol.RL_CVarInt('rl_hand_orient', 1), 0, 2);
-	}
-
-	States
-	{
-	Ready:
-		RLHD A 1 RL_HandPose;
-		Loop;
-	Select:
-		RLHD A 1 A_Raise(60);
-		Wait;
-	Deselect:
-		RLHD A 1 A_Lower(60);
-		Wait;
-	Fire:
-		RLHD A 1;
-		Goto Ready;
-	Spr.Hidden:
-		TNT1 A -1;
+	
+	Spawn:
+		PIST A -1;
 		Stop;
-	Spawn:
-		TNT1 A -1;
-		Stop;
-	}
-}
-
-// A magazine dropped from the gun: falls, clatters, fades after a while.
-class RL_DroppedMag : Actor
-{
-	Default
-	{
-		Radius 2;
-		Height 3;
-		Gravity 0.8;
-		+NOBLOCKMAP
-		+DROPOFF
-		+NOTELEPORT
-		+THRUACTORS
-		+CANNOTPUSH
-		+MOVEWITHSECTOR
-	}
-
-	int falling;
-
-	States
-	{
-	Spawn:
-		RLMG A 1
-		{
-			invoker.falling++;
-			if (pos.z <= floorz || invoker.falling > 105) return ResolveState("Landed");
-			return ResolveState(null);
-		}
-		Loop;
-	Landed:
-		RLMG B 350 A_StartSound("rl/pistol/magdrop", CHAN_BODY, 0, 0.6);
-	Fade:
-		RLMG B 1 A_FadeOut(0.05);
-		Loop;
-	}
-}
-
-// A live round ejected by racking the slide.
-class RL_EjectedRound : Actor
-{
-	int falling;
-
-	Default
-	{
-		Radius 1;
-		Height 1;
-		Gravity 0.8;
-		+NOBLOCKMAP
-		+DROPOFF
-		+NOTELEPORT
-		+THRUACTORS
-		+CANNOTPUSH
-		+MOVEWITHSECTOR
-	}
-
-	States
-	{
-	Spawn:
-		RLRD A 1
-		{
-			invoker.falling++;
-			angle += 25;                       // tumble
-			if (pos.z <= floorz || invoker.falling > 105) return ResolveState("Landed");
-			return ResolveState(null);
-		}
-		Loop;
-	Landed:
-		RLRD A 350 A_StartSound("weapons/casing", CHAN_BODY, 0, 0.5);
-	Fade:
-		RLRD A 1 A_FadeOut(0.05);
-		Loop;
-	}
-}
-
-// A spent case ejected on every shot.
-class RL_Casing : RL_EjectedRound
-{
-	States
-	{
-	Spawn:
-		RLCS A 1
-		{
-			invoker.falling++;
-			angle += 31;
-			if (pos.z <= floorz || invoker.falling > 105) return ResolveState("Landed");
-			return ResolveState(null);
-		}
-		Loop;
-	Landed:
-		RLCS A 210 A_StartSound("weapons/casing", CHAN_BODY, 0, 0.4);
-	Fade:
-		RLCS A 1 A_FadeOut(0.05);
-		Loop;
 	}
 }

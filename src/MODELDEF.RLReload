@@ -274,6 +274,7 @@ Model RL_EjectedRound
 	Skin 0 "Pistol.png"
 	Scale 0.65 0.65 0.65
 	FrameIndex RLRD A 0 0
+	FrameIndex RLRD B 0 0
 }
 
 // Spent case (cartridge model with the bullet cut off)
@@ -284,4 +285,247 @@ Model RL_Casing
 	Skin 0 "Pistol.png"
 	Scale 0.6 0.6 0.6
 	FrameIndex RLCS A 0 0
+	FrameIndex RLCS B 0 0
+}
+
+// ===================== SHOTGUN =====================
+// RL_Shotgun.md3: 0-35 HDVR frames, 36-44 pump steps with a shell in the chamber, 45-53 empty chamber
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Scale -1.0 1.0 1.0
+
+	FrameIndex RSGO A 0 4
+	FrameIndex RSGO B 0 6
+	FrameIndex RSGO C 0 14
+	FrameIndex RSGO D 0 18
+	FrameIndex RSGO E 0 32
+	FrameIndex RSGL A 0 22
+	FrameIndex RSGL B 0 23
+	FrameIndex RSGL C 0 24
+	FrameIndex RSGL D 0 25
+	FrameIndex RSGL E 0 26
+	FrameIndex RSGL F 0 27
+	FrameIndex RSGL G 0 28
+	FrameIndex RSGL H 0 29
+	FrameIndex RSGL I 0 30
+	FrameIndex RSGL J 0 31
+}
+
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RSGA A 0 36
+	FrameIndex RSGA B 0 37
+	FrameIndex RSGA C 0 38
+	FrameIndex RSGA D 0 39
+	FrameIndex RSGA E 0 40
+	FrameIndex RSGA F 0 41
+	FrameIndex RSGA G 0 42
+	FrameIndex RSGA H 0 43
+	FrameIndex RSGA I 0 44
+	FrameIndex RSGB A 0 45
+	FrameIndex RSGB B 0 46
+	FrameIndex RSGB C 0 47
+	FrameIndex RSGB D 0 48
+	FrameIndex RSGB E 0 49
+	FrameIndex RSGB F 0 50
+	FrameIndex RSGB G 0 51
+	FrameIndex RSGB H 0 52
+	FrameIndex RSGB I 0 53
+}
+
+// pump with the off hand on it (version A)
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Model 1 "RL_PumpHandA.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RSGC A 0 36
+	FrameIndex RSGC A 1 0
+	FrameIndex RSGC B 0 37
+	FrameIndex RSGC B 1 1
+	FrameIndex RSGC C 0 38
+	FrameIndex RSGC C 1 2
+	FrameIndex RSGC D 0 39
+	FrameIndex RSGC D 1 3
+	FrameIndex RSGC E 0 40
+	FrameIndex RSGC E 1 4
+	FrameIndex RSGC F 0 41
+	FrameIndex RSGC F 1 5
+	FrameIndex RSGC G 0 42
+	FrameIndex RSGC G 1 6
+	FrameIndex RSGC H 0 43
+	FrameIndex RSGC H 1 7
+	FrameIndex RSGC I 0 44
+	FrameIndex RSGC I 1 8
+}
+
+// pump with the off hand on it (version A)
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Model 1 "RL_PumpHandA.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RSGD A 0 45
+	FrameIndex RSGD A 1 0
+	FrameIndex RSGD B 0 46
+	FrameIndex RSGD B 1 1
+	FrameIndex RSGD C 0 47
+	FrameIndex RSGD C 1 2
+	FrameIndex RSGD D 0 48
+	FrameIndex RSGD D 1 3
+	FrameIndex RSGD E 0 49
+	FrameIndex RSGD E 1 4
+	FrameIndex RSGD F 0 50
+	FrameIndex RSGD F 1 5
+	FrameIndex RSGD G 0 51
+	FrameIndex RSGD G 1 6
+	FrameIndex RSGD H 0 52
+	FrameIndex RSGD H 1 7
+	FrameIndex RSGD I 0 53
+	FrameIndex RSGD I 1 8
+}
+
+// pump with the off hand on it (version B)
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Model 1 "RL_PumpHandB.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RSGE A 0 36
+	FrameIndex RSGE A 1 0
+	FrameIndex RSGE B 0 37
+	FrameIndex RSGE B 1 1
+	FrameIndex RSGE C 0 38
+	FrameIndex RSGE C 1 2
+	FrameIndex RSGE D 0 39
+	FrameIndex RSGE D 1 3
+	FrameIndex RSGE E 0 40
+	FrameIndex RSGE E 1 4
+	FrameIndex RSGE F 0 41
+	FrameIndex RSGE F 1 5
+	FrameIndex RSGE G 0 42
+	FrameIndex RSGE G 1 6
+	FrameIndex RSGE H 0 43
+	FrameIndex RSGE H 1 7
+	FrameIndex RSGE I 0 44
+	FrameIndex RSGE I 1 8
+}
+
+// pump with the off hand on it (version B)
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Model 1 "RL_PumpHandB.md3"
+	Skin 1 "RL_Glove.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+
+	FrameIndex RSGF A 0 45
+	FrameIndex RSGF A 1 0
+	FrameIndex RSGF B 0 46
+	FrameIndex RSGF B 1 1
+	FrameIndex RSGF C 0 47
+	FrameIndex RSGF C 1 2
+	FrameIndex RSGF D 0 48
+	FrameIndex RSGF D 1 3
+	FrameIndex RSGF E 0 49
+	FrameIndex RSGF E 1 4
+	FrameIndex RSGF F 0 50
+	FrameIndex RSGF F 1 5
+	FrameIndex RSGF G 0 51
+	FrameIndex RSGF G 1 6
+	FrameIndex RSGF H 0 52
+	FrameIndex RSGF H 1 7
+	FrameIndex RSGF I 0 53
+	FrameIndex RSGF I 1 8
+}
+
+// Muzzle flash (copied from HDVR)
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "Shotgun_MF1.md3"
+	Skin 0 "MF1.png"
+	Model 1 "Shotgun_MF2.md3"
+	Skin 1 "MF2.png"
+	Scale 1.0 1.0 1.0
+	Offset 0.0 -34.0 13.0
+	NOINTERPOLATION
+	FrameIndex SHTF A 0 0
+	FrameIndex SHTF A 1 0
+}
+Model RL_Shotgun
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "Shotgun_MF1.md3"
+	Model 1 "Shotgun_MF2.md3"
+	Scale 1.0 1.0 1.0
+	Offset 0.0 -34.0 13.0
+	NOINTERPOLATION
+	FrameIndex SHTF B 0 0
+	FrameIndex SHTF B 1 0
+}
+
+// off hand holding a shell (pinch pose + shell), one frame per orientation
+Model RL_OffHand
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_Hand.md3"
+	Skin 0 "RL_Glove.png"
+	Model 1 "RL_ShotShell.md3"
+	Skin 1 "Shotgun.png"
+	Scale -1.0 1.0 1.0
+	NOINTERPOLATION
+	FrameIndex RLHD M 0 3
+	FrameIndex RLHD M 1 1
+	FrameIndex RLHD N 0 7
+	FrameIndex RLHD N 1 2
+	FrameIndex RLHD O 0 11
+	FrameIndex RLHD O 1 3
+}
+
+// ejected hull / live shell
+Model RL_Hull
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_ShotShell.md3"
+	Skin 0 "Shotgun.png"
+	Scale 0.5 0.5 0.5
+	FrameIndex RLHL A 0 0
+	FrameIndex RLHL B 0 0
+}
+Model RL_LiveShell
+{
+	Path "Models/Weapons/Hud/Shotgun"
+	Model 0 "RL_ShotShell.md3"
+	Skin 0 "Shotgun.png"
+	Scale 0.5 0.5 0.5
+	FrameIndex RLLS A 0 0
+	FrameIndex RLLS B 0 0
 }
