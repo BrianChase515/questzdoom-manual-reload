@@ -17,3 +17,4 @@ server float rl_hip_height = 0.78;
 server float rl_hip_r = 20;
 user int rl_hand_orient = 1;
 user bool rl_log = false;
+server noarchive int rl_calib_request = 0;

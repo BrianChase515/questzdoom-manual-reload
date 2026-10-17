@@ -24,6 +24,15 @@ class RL_VR play
 		Vector3 side = (Actor.AngleToVector(p.angle + 90, 1), 0);
 		Vector3 up   = (Actor.AngleToVector(p.angle, sin(p.pitch)), cos(p.pitch));
 		Vector3 pos  = p.pos + (0, 0, p.player.viewheight - 8) + fwd * 14;
+		if (F('rl_fake_anglefmt') != 0)
+		{
+			// mimic QuestZDoom 1.5.x: directions come back as (yaw, pitch, 0) and go through ToDir
+			Vector3 fa = (p.angle, p.pitch, 0);
+			Vector3 sa = (p.angle + 90, 0, 0);
+			fwd = RL_Math.ToDir(fa);
+			side = RL_Math.ToDir(sa);
+			[fwd, side, up] = RL_Math.Frame(fwd, side);
+		}
 		return pos, fwd, side, up;
 	}
 

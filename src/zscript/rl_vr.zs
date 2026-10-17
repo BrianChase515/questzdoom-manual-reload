@@ -18,17 +18,19 @@ class RL_VR play
 	// so offsets of +90 yaw / -90 pitch give the controller's side and up axes.
 	static Vector3, Vector3, Vector3, Vector3 GunPose(PlayerPawn p)
 	{
-		Vector3 fwd  = p.AttackDir(p, p.angle, p.pitch);
-		Vector3 side = p.AttackDir(p, p.angle + 90, p.pitch);
-		Vector3 up   = p.AttackDir(p, p.angle, p.pitch - 90);
+		Vector3 fwd  = RL_Math.ToDir(p.AttackDir(p, p.angle, p.pitch));
+		Vector3 side = RL_Math.ToDir(p.AttackDir(p, p.angle + 90, p.pitch));
+		Vector3 up;
+		[fwd, side, up] = RL_Math.Frame(fwd, side);
 		return p.AttackPos, fwd, side, up;
 	}
 
 	static Vector3, Vector3, Vector3, Vector3 OffhandPose(PlayerPawn p)
 	{
-		Vector3 fwd  = p.OffhandDir(p, p.angle, p.pitch);
-		Vector3 side = p.OffhandDir(p, p.angle + 90, p.pitch);
-		Vector3 up   = p.OffhandDir(p, p.angle, p.pitch - 90);
+		Vector3 fwd  = RL_Math.ToDir(p.OffhandDir(p, p.angle, p.pitch));
+		Vector3 side = RL_Math.ToDir(p.OffhandDir(p, p.angle + 90, p.pitch));
+		Vector3 up;
+		[fwd, side, up] = RL_Math.Frame(fwd, side);
 		return p.OffhandPos, fwd, side, up;
 	}
 

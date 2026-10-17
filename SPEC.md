@@ -70,6 +70,15 @@ Status: ✅ done · 🧪 needs headset test · 📝 proposed (needs Brian's OK)
 - Model frames chosen per tic (psprite Sprite/Frame) need `NOINTERPOLATION` model blocks, or the renderer
   blends toward the state's own frame.
 
+- **QuestZDoom 1.5.x quirk:** the *script* versions of `AttackDir`/`OffhandDir` return `(yaw, pitch, 0)` in
+  degrees, not a vector (engine-side firing uses the real vector). `RL_Math.ToDir` converts (z == 0 exactly
+  means angle form). Newer QuestZDoom returns a real unit vector; both are handled.
+- Mod cvars are saved in the player's config, so changing a default does nothing for existing players —
+  rename the cvar when a default must change.
+- Every model in a MODELDEF block is drawn on every frame of that block; give optional parts their own block.
+- Calibration wizard (`rl_calib_request`) records magwell / slide spots from the player's own hands.
+- Deliveries to the laptop are verified by pulling the file back and comparing hashes.
+
 ## 4. Test harness
 
 Desktop LZDoom 3.88b built from source (headers fix: `-include cstdint -include stdexcept ...`, stub

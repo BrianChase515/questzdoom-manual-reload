@@ -5,12 +5,22 @@ class RL_Calibrate : EventHandler
 {
 	override void RenderOverlay(RenderEvent e)
 	{
-		CVar cv = CVar.FindCVar('rl_calibrate');
-		if (!cv || !cv.GetBool()) return;
 		let pm = players[consoleplayer].mo;
 		if (!pm) return;
 		let p = RL_Pistol(pm.FindInventory("RL_Pistol"));
 		if (!p) return;
+
+		if (p.calStep > 0)
+		{
+			String msg = p.calStep == 1
+				? "CALIBRATING 1/2: hold the pistol, put your off hand where you'd SEAT A MAG (bottom of the grip) and squeeze grip"
+				: "CALIBRATING 2/2: now put your off hand on the BACK OF THE SLIDE and squeeze grip";
+			Screen.DrawText(SmallFont, Font.CR_YELLOW, 10, 40, msg,
+				DTA_VirtualWidth, 480, DTA_VirtualHeight, 300, DTA_KeepRatio, true);
+		}
+
+		CVar cv = CVar.FindCVar('rl_calibrate');
+		if (!cv || !cv.GetBool()) return;
 
 		static const String handNames[] = { "empty", "HOLDING MAG", "ON SLIDE", "grip" };
 		Array<String> lines;

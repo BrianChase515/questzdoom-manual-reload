@@ -65,6 +65,7 @@ class RL_Pistol : Pistol
 	double lf, ls, lu;     // off hand relative to gun (forward, side, up)
 	double bh, bd, eyeH;   // off hand height above feet, distance from body, eye height
 	bool   nearWell, nearSlide, inHip;
+	int    calStep;      // 0 = off, 1 = waiting for magwell squeeze, 2 = waiting for slide squeeze
 	Vector3 rawGun, rawOff, rawFwd, rawUp;   // raw engine values relative to the player, for the readout
 	double rawFwdLen;
 
@@ -151,6 +152,31 @@ class RL_Pistol : Pistol
 		}
 
 		Measure(pm);
+
+		// ---- grab-zone calibration wizard ---------------------------------
+		CVar req = CVar.FindCVar('rl_calib_request');
+		if (req && req.GetInt() != 0) { req.SetInt(0); calStep = 1; hand = HAND_EMPTY; }
+		if (calStep > 0)
+		{
+			if (gripNow && !gripWas)
+			{
+				if (calStep == 1)
+				{
+					SetF('rl_well_f', lf); SetF('rl_well_s', ls); SetF('rl_well_u', lu);
+					pm.A_StartSound("rl/pistol/magin", CHAN_AUTO);
+					calStep = 2;
+				}
+				else
+				{
+					SetF('rl_slide_f', lf); SetF('rl_slide_s', ls); SetF('rl_slide_u', lu);
+					pm.A_StartSound("rl/pistol/slide", CHAN_AUTO);
+					calStep = 0;
+				}
+				if (RL_CVarInt('rl_log') != 0) RL_Log(pm, "CALIBRATE");
+			}
+			slideShown = slideLocked ? 1 : 0;
+			return;                       // no reload actions while calibrating
+		}
 
 		// calibration log: every grip squeeze / mag release writes a tagged line
 		if (RL_CVarInt('rl_log') != 0)
@@ -250,6 +276,12 @@ class RL_Pistol : Pistol
 		nearWell  = (here - well).Length()  < RL_CVarF('rl_well_r', 4);
 		nearSlide = (here - slide).Length() < RL_CVarF('rl_slide_r', 4);
 		inHip     = bh < eyeH * RL_CVarF('rl_hip_height', 0.65) && bd < RL_CVarF('rl_hip_r', 20);
+	}
+
+	static void SetF(Name n, double v)
+	{
+		CVar c = CVar.FindCVar(n);
+		if (c) c.SetFloat(v);
 	}
 
 	void RL_Log(PlayerPawn pm, String tag)

@@ -12,6 +12,7 @@ OptionMenu "RL_Settings"
 	StaticText "Push it into the grip to seat. Grip the back of", 1
 	StaticText "the slide and pull to rack.", 1
 	StaticText " "
+	Command "Calibrate grab zones (follow the prompts)", "set rl_calib_request 1"
 	Option "Show calibration readout", "rl_calibrate", "OnOff"
 	Option "Write calibration log", "rl_log", "OnOff"
 	StaticText "Log: every grip squeeze writes your hand position to questzdoom.log", 1
